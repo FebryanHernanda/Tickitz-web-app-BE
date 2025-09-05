@@ -1,0 +1,7 @@
+*.http
+tmp
+
+.air.*
+temp
+
+.env*
