@@ -1,5 +1,30 @@
 package main
 
-func main() {
+import (
+	"log"
 
+	"github.com/FebryanHernanda/Tickitz-web-app-BE/internal/configs"
+	"github.com/FebryanHernanda/Tickitz-web-app-BE/internal/routers"
+)
+
+// @title Tickitz Booking API
+// @version 1.0
+// @description API for book ticket cinemas
+// @host localhost:8080
+// @BasePath /
+//
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+
+func main() {
+	db, err := configs.InitDB()
+	if err != nil {
+		log.Fatal("DB init failed:", err)
+	}
+	defer db.Close()
+
+	r := routers.MainRouter(db)
+
+	r.Run(":8080")
 }
