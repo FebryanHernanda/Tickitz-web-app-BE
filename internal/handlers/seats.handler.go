@@ -39,11 +39,36 @@ func (h *SeatHandler) GetAvailableSeats(ctx *gin.Context) {
 		return
 	}
 
+	exist, err := h.Repo.IsCinemaScheduleExists(ctx, cinemaSchedulesID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	if !exist {
+		ctx.JSON(http.StatusNotFound, gin.H{
+			"success": false,
+			"error":   "Cinema schedule not found",
+		})
+		return
+	}
+
 	seats, err := h.Repo.GetAvailableSeats(ctx, cinemaSchedulesID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"error":   err.Error(),
+		})
+		return
+	}
+
+	if len(seats) == 0 {
+		ctx.JSON(http.StatusOK, gin.H{
+			"success": true,
+			"message": "All seats are available",
 		})
 		return
 	}
