@@ -45,8 +45,8 @@ func MainRouter(db *pgxpool.Pool) *gin.Engine {
 
 	// Register router
 	MoviesRouter(r, movieHandler)
-	ProfileRouter(r, profileHandler)
-	OrdersRouter(r, ordersHandler)
+	ProfileRouter(r, profileHandler, jwtManager)
+	OrdersRouter(r, ordersHandler, jwtManager)
 	AdminRouter(r, adminHandler, jwtManager)
 	AuthRouter(r, authHandler)
 	SeatsRouter(r, seatHandler)
