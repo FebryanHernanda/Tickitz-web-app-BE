@@ -1,12 +1,14 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/FebryanHernanda/Tickitz-web-app-BE/internal/models"
 	"github.com/FebryanHernanda/Tickitz-web-app-BE/internal/repositories"
 	"github.com/FebryanHernanda/Tickitz-web-app-BE/internal/utils"
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type ProfileHandler struct {
@@ -25,6 +27,8 @@ func NewProfileHandler(repo *repositories.ProfileRepository) *ProfileHandler {
 // @Tags         Profile
 // @Accept       multipart/form-data
 // @Produce      json
+// @Param        email   formData  string  false  "Email"
+// @Param        password  formData  string  false  "Password"
 // @Param        first_name   formData  string  false  "First Name"
 // @Param        last_name    formData  string  false  "Last Name"
 // @Param        phone_number formData  string  false  "Phone Number"
@@ -34,19 +38,62 @@ func NewProfileHandler(repo *repositories.ProfileRepository) *ProfileHandler {
 // @Failure      401 {object} map[string]interface{} "Unauthorized"
 // @Failure      500 {object} map[string]interface{} "Internal Server Error"
 // @Security     BearerAuth
-// @Router       /profile [patch]
+// @Router       /profile/edit [patch]
 func (h *ProfileHandler) UpdateProfile(ctx *gin.Context) {
 	rawClaims, _ := ctx.Get("claims")
 	claims := rawClaims.(*utils.Claims)
 
 	userID := claims.UserID
 
-	var profileUpdate models.ProfileUpdate
-	if err := ctx.ShouldBind(&profileUpdate); err != nil {
+	// var userUpdate models.UserUpdate
+	// var profileUpdate models.ProfileUpdate
+	var update models.UserUpdateRequest
+
+	if err := ctx.ShouldBind(&update); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"error":   err.Error(),
 		})
+	}
+
+	if update.User.Email != nil {
+		if err := utils.IsValidEmail(*update.User.Email); err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"success": false,
+				"error":   err.Error(),
+			})
+			return
+		}
+	}
+
+	if update.User.Password != nil {
+		if err := utils.IsValidPassword(*update.User.Password); err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"success": false,
+				"error":   err.Error(),
+			})
+			return
+		}
+	}
+
+	hashedPass, err := bcrypt.GenerateFromPassword([]byte(*update.User.Password), bcrypt.DefaultCost)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   "failed to hash password",
+		})
+		return
+	}
+	hashPassStr := string(hashedPass)
+	update.User.Password = &hashPassStr
+
+	if err := h.repo.UpdateProfile(ctx, userID, &update); err != nil {
+		log.Printf("%s", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"status": false,
+			"error":  err.Error(),
+		})
+		return
 	}
 
 	// file upload
@@ -60,14 +107,7 @@ func (h *ProfileHandler) UpdateProfile(ctx *gin.Context) {
 	}
 
 	if savePath != "" {
-		profileUpdate.ImagePath = &savePath
-	}
-
-	if err := h.repo.UpdateProfile(ctx, userID, &profileUpdate); err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"status": false,
-			"error":  err.Error(),
-		})
+		update.Profile.ImagePath = &savePath
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
