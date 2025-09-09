@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/FebryanHernanda/Tickitz-web-app-BE/internal/models"
 	"github.com/FebryanHernanda/Tickitz-web-app-BE/internal/repositories"
@@ -24,15 +23,17 @@ func NewOrdersHandler(repo *repositories.OrdersRepository) *OrdersHandler {
 // @Summary Create Order
 // @Description  Create a new order
 // @Tags Orders
+// @Security     BearerAuth
 // @Accept       json
 // @Produce      json
 // @Param order body models.OrderRequest true "Order data"
 // @Success 200 {object} models.SuccessResponse
 // @Failure 400 {object} models.ErrorResponse
+// @Failure 401 {object} models.ErrorResponse   "Unauthorized or invalid token"
 // @Failure 404 {object} models.ErrorResponse
 // @Failure 409 {object} models.ErrorResponse
 // @Failure 500 {object} models.ErrorResponse
-// @Router /orders/ [post]
+// @Router /orders [post]
 func (h *OrdersHandler) CreateOrder(ctx *gin.Context) {
 	var req models.OrderRequest
 	if err := ctx.ShouldBind(&req); err != nil {
@@ -106,22 +107,19 @@ func (h *OrdersHandler) CreateOrder(ctx *gin.Context) {
 // @Summary      Get order history by user ID
 // @Description  Retrieve a user's order history
 // @Tags         Orders
+// @Security     BearerAuth
 // @Produce      json
-// @Param        userID path int true "User ID"
 // @Success      200    {object} models.SuccessResponse
 // @Failure 	 400    {object} models.ErrorResponse
+// @Failure      401    {object} models.ErrorResponse   "Unauthorized or invalid token"
 // @Failure 	 404    {object} models.ErrorResponse
 // @Failure 	 500    {object} models.ErrorResponse
-// @Router       /orders/history/{userID} [get]
+// @Router       /orders/history [get]
 func (h *OrdersHandler) GetOrdersHistory(ctx *gin.Context) {
-	userIDParams := ctx.Param("userID")
-	userID, err := strconv.Atoi(userIDParams)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid user ID",
-		})
-		return
-	}
+	rawClaims, _ := ctx.Get("claims")
+	claims := rawClaims.(*utils.Claims)
+
+	userID := claims.UserID
 
 	orderHistory, err := h.repo.GetOrdersHistory(ctx, userID)
 	if err != nil {
