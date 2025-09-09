@@ -157,7 +157,7 @@ func (r *AdminRepository) AddCinemaSchedule(ctx context.Context, data []models.C
 }
 
 func (r *AdminRepository) GetMovieSchedule(ctx context.Context) ([]models.GetSchedule, error) {
-	query := `SELECT id, date, time FROM schedules`
+	query := `SELECT id, date, time, movie_id FROM schedules`
 
 	rows, err := r.DB.Query(ctx, query)
 	if err != nil {
@@ -172,6 +172,7 @@ func (r *AdminRepository) GetMovieSchedule(ctx context.Context) ([]models.GetSch
 			&sch.ID,
 			&sch.Date,
 			&sch.Time,
+			&sch.MovieID,
 		)
 		if err != nil {
 			return nil, err
