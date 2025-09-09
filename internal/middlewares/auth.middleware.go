@@ -18,7 +18,7 @@ func VerifyToken(jwtManager *utils.JWTManager) gin.HandlerFunc {
 		if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" || parts[1] == "" {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"success": false,
-				"error":   "Please login",
+				"error":   "Please login according to your role",
 			})
 			return
 		}
@@ -44,7 +44,7 @@ func AuthMiddleware(allowedRoles ...string) func(*gin.Context) {
 		if !exist {
 			ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
 				"success": false,
-				"error":   "Please login again",
+				"error":   "Please login",
 			})
 			return
 		}
