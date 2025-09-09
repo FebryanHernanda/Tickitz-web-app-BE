@@ -65,6 +65,7 @@ func (a *AdminHandler) GetAllMovies(ctx *gin.Context) {
 // @Param        user  body      models.AddMovies  true  "Add Movies data"
 // @Success      200  {object}  models.SuccessResponse
 // @Failure      400  {object}  models.ErrorResponse
+// @Failure      401  {object}  models.ErrorResponse
 // @Failure      500  {object}  models.ErrorResponse
 // @Router       /admin/movies/add [post]
 func (h *AdminHandler) AddMovies(ctx *gin.Context) {
@@ -99,6 +100,7 @@ func (h *AdminHandler) AddMovies(ctx *gin.Context) {
 // @Security     BearerAuth
 // @Produce      json
 // @Success      200  {object}  models.SuccessResponse
+// @Failure      401  {object}  models.ErrorResponse
 // @Failure      500  {object}  models.ErrorResponse
 // @Router       /admin/movies/schedule [get]
 func (h *AdminHandler) GetMovieSchedule(ctx *gin.Context) {
@@ -126,6 +128,7 @@ func (h *AdminHandler) GetMovieSchedule(ctx *gin.Context) {
 // @Param        user  body     []models.CinemaScheduleLocation  true  "Add cinemas and location schedule data"
 // @Success      200  {object}  models.SuccessResponse
 // @Failure      400  {object}  models.ErrorResponse
+// @Failure      401  {object}  models.ErrorResponse
 // @Failure      500  {object}  models.ErrorResponse
 // @Router       /admin/movies/cinemaschedule/add [post]
 func (h *AdminHandler) AddCinemaSchedule(ctx *gin.Context) {
@@ -159,9 +162,11 @@ func (h *AdminHandler) AddCinemaSchedule(ctx *gin.Context) {
 // @Summary      Delete a movie by ID
 // @Description  Delete a movie and all related data by movie ID
 // @Tags         Admin
+// @Security     BearerAuth
 // @Param        id   path      int  true  "Movie ID"
 // @Success      200  {object}  models.SuccessResponse
 // @Failure      400  {object}  models.ErrorResponse
+// @Failure      401  {object}  models.ErrorResponse
 // @Failure      404  {object}  models.ErrorResponse
 // @Failure      500  {object}  models.ErrorResponse
 // @Router       /admin/movies/delete/{id} [delete]
