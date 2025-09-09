@@ -54,7 +54,7 @@ func (u *AuthHandler) Register(ctx *gin.Context) {
 		req.Role = "user"
 	}
 
-	if err := utils.IsValidEmail(req); err != nil {
+	if err := utils.IsValidEmail(req.Email); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"error":   err.Error(),
@@ -62,7 +62,7 @@ func (u *AuthHandler) Register(ctx *gin.Context) {
 		return
 	}
 
-	if err := utils.IsValidPassword(req); err != nil {
+	if err := utils.IsValidPassword(req.Password); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"error":   err.Error(),
