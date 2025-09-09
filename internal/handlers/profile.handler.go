@@ -19,46 +19,6 @@ func NewProfileHandler(repo *repositories.ProfileRepository) *ProfileHandler {
 	}
 }
 
-// /* // CreateProfile godoc
-// // @Summary      Create a new profile
-// // @Description  Create a profile for a user. Points are initialized to 0 and default image is set.
-// // @Tags         Profile
-// // @Accept       json
-// // @Produce      json
-// // @Security BearerAuth
-// // @Param        body  body      models.CreateProfile  true  "Profile data"
-// // @Success      200   {object}  map[string]interface{}  "Profile created successfully"
-// // @Failure      400   {object}  map[string]interface{}  "Bad Request"
-// // @Failure      500   {object}  map[string]interface{}  "Internal Server Error"
-// // @Router       /profile [post]
-// func (h *ProfileHandler) CreateProfile(ctx *gin.Context) {
-// 	var profile models.CreateProfile
-
-// 	if err := ctx.ShouldBind(&profile); err != nil {
-// 		ctx.JSON(http.StatusBadRequest, gin.H{
-// 			"status": false,
-// 			"error":  err.Error(),
-// 		})
-// 		return
-// 	}
-
-// 	profile.Points = 0
-// 	profile.ImagePath = "public/profile/default.png"
-// 	err := h.repo.CreateProfile(ctx, &profile)
-// 	if err != nil {
-// 		ctx.JSON(http.StatusInternalServerError, gin.H{
-// 			"status": false,
-// 			"error":  err.Error(),
-// 		})
-// 		return
-// 	}
-
-// 	ctx.JSON(http.StatusOK, gin.H{
-// 		"status":  true,
-// 		"message": "Profile created",
-// 	})
-// } */
-
 // UpdateProfile godoc
 // @Summary      Update user's profile
 // @Description  Update the profile of the logged-in user. Supports optional file upload for image.
