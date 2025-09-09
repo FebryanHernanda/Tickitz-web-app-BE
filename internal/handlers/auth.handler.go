@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/FebryanHernanda/Tickitz-web-app-BE/internal/models"
@@ -30,14 +31,14 @@ type LoginResponse struct {
 
 // Register godoc
 // @Summary      Register a new user
-// @Description  Register user with validation, password hashing, and virtual account generation
+// @Description  Create a new user account with email, password, and role.
 // @Tags         Authentication
 // @Accept       json
 // @Produce      json
-// @Param        user  body      models.RegisterUser  true  "User registration data"
-// @Success      200   {object}  models.SuccessResponse
-// @Failure      400   {object}  models.ErrorResponse
-// @Failure      500   {object}  models.ErrorResponse
+// @Param        user body models.RegisterUser true "Register User"
+// @Success      200  {object}  models.SuccessResponse
+// @Failure      400  {object}  models.ErrorResponse
+// @Failure      500  {object}  models.ErrorResponse
 // @Router       /auth/register [post]
 func (u *AuthHandler) Register(ctx *gin.Context) {
 	var req models.RegisterUser
@@ -105,7 +106,7 @@ func (u *AuthHandler) Register(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"data":    user,
+		"data":    user.Email,
 	})
 }
 
@@ -116,14 +117,15 @@ func (u *AuthHandler) Register(ctx *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Param        user body models.LoginUser true "User login credentials"
-// @Success      200  {object} LoginResponse
-// @Failure      401  {object} models.ErrorResponse
-// @Failure      500  {object} models.ErrorResponse
+// @Success      200  {object}  LoginResponse
+// @Failure      401  {object}  models.ErrorResponse
+// @Failure      500  {object}  models.ErrorResponse
 // @Router       /auth/login [post]
 func (u *AuthHandler) Login(ctx *gin.Context) {
 	var user models.LoginUser
 
 	if err := ctx.ShouldBind(&user); err != nil {
+		log.Printf("%s", err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"error":   err.Error(),
