@@ -5,45 +5,43 @@ import (
 	"fmt"
 	"math/rand"
 	"regexp"
-
-	"github.com/FebryanHernanda/Tickitz-web-app-BE/internal/models"
 )
 
-func IsValidEmail(user models.RegisterUser) error {
+func IsValidEmail(email string) error {
 	reEmail, err := regexp.Compile(`^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+.[a-zA-Z]{2,4}$`)
 	if err != nil {
 		return err
 	}
 
-	if isEmailMatched := reEmail.Match([]byte(user.Email)); !isEmailMatched {
+	if isEmailMatched := reEmail.Match([]byte(email)); !isEmailMatched {
 		return errors.New("email format is incorrect, use format like: user@email.com")
 	}
 
 	return nil
 }
 
-func IsValidPassword(user models.RegisterUser) error {
-	if len(user.Password) < 8 {
+func IsValidPassword(password string) error {
+	if len(password) < 8 {
 		return errors.New("password minimum 8 characters")
 	}
 
 	reUppercase := regexp.MustCompile(`[A-Z]`)
-	if !reUppercase.MatchString(user.Password) {
+	if !reUppercase.MatchString(password) {
 		return errors.New("password harus mengandung huruf besar")
 	}
 
 	reLowercase := regexp.MustCompile(`[a-z]`)
-	if !reLowercase.MatchString(user.Password) {
+	if !reLowercase.MatchString(password) {
 		return errors.New("password must contain capital letters")
 	}
 
 	reNumber := regexp.MustCompile(`[0-9]`)
-	if !reNumber.MatchString(user.Password) {
+	if !reNumber.MatchString(password) {
 		return errors.New("password must contain numbers")
 	}
 
 	reSpecial := regexp.MustCompile(`[#!?@$%^&*-]`)
-	if !reSpecial.MatchString(user.Password) {
+	if !reSpecial.MatchString(password) {
 		return errors.New("password must contain special characters")
 	}
 
