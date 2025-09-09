@@ -19,18 +19,6 @@ type RegisterUser struct {
 }
 
 type LoginUser struct {
-	Email    string `json:"email" binding:"required,email" example:"user@mail.com"`
-	Password string `json:"password" binding:"required" example:"your_password"`
-}
-
-type Profile struct {
-	ID             int     `json:"id"`
-	Email          string  `json:"email"`
-	Role           string  `json:"role"`
-	VirtualAccount string  `json:"virtual_account"`
-	FirstName      *string `json:"first_name"`
-	LastName       *string `json:"last_name"`
-	PhoneNumber    *string `json:"phone_number"`
-	Points         *int    `json:"points"`
-	ImagePath      *string `json:"image_path"`
+	Email    string `json:"email"  binding:"required,email" example:"user@mail.com"`
+	Password string `json:"password"  binding:"required" example:"your_password"`
 }
