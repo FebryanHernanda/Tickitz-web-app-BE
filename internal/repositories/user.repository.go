@@ -22,16 +22,29 @@ func (r *UserRepository) RegisterUser(ctx context.Context, user *models.User) er
 	user.CreatedAt = time.Now()
 	user.UpdatedAt = time.Now()
 
-	query := `
+	queryUser := `
 	INSERT INTO users (email, password, role,  virtual_account, created_at, updated_at)
     VALUES ($1, $2, $3, $4, $5, $6)
 	RETURNING id
 	`
 	values := []any{user.Email, user.Password, user.Role, user.VirtualAccount, user.CreatedAt, user.UpdatedAt}
 
-	err := r.DB.QueryRow(ctx, query, values...).Scan(&user.ID)
+	var userID int
+	err := r.DB.QueryRow(ctx, queryUser, values...).Scan(&userID)
+	if err != nil {
+		return err
+	}
 
-	return err
+	queryProfile := `
+        INSERT INTO profiles (user_id, points, image_path)
+        VALUES ($1, 0, 'public/profile/default.png')
+		`
+	_, err = r.DB.Exec(ctx, queryProfile, userID)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (*models.User, error) {
