@@ -19,56 +19,74 @@ func NewProfileRepository(db *pgxpool.Pool) *ProfileRepository {
 	}
 }
 
-func (pr *ProfileRepository) UpdateProfile(ctx context.Context, userID int, update *models.ProfileUpdate) error {
-	setParts := []string{}
-	args := []any{}
+func (pr *ProfileRepository) UpdateProfile(ctx context.Context, userID int, update *models.UserUpdateRequest) error {
+	// --- update profiles ---
+	profileSet := []string{}
+	profileArgs := []any{}
 	argPos := 1
 
-	if update.FirstName != nil {
-		setParts = append(setParts, fmt.Sprintf("first_name = $%d", argPos))
-		args = append(args, *update.FirstName)
+	if update.Profile.FirstName != nil {
+		profileSet = append(profileSet, fmt.Sprintf("first_name = $%d", argPos))
+		profileArgs = append(profileArgs, *update.Profile.FirstName)
+		argPos++
+	}
+	if update.Profile.LastName != nil {
+		profileSet = append(profileSet, fmt.Sprintf("last_name = $%d", argPos))
+		profileArgs = append(profileArgs, *update.Profile.LastName)
+		argPos++
+	}
+	if update.Profile.PhoneNumber != nil {
+		profileSet = append(profileSet, fmt.Sprintf("phone_number = $%d", argPos))
+		profileArgs = append(profileArgs, *update.Profile.PhoneNumber)
+		argPos++
+	}
+	if update.Profile.ImagePath != nil {
+		profileSet = append(profileSet, fmt.Sprintf("image_path = $%d", argPos))
+		profileArgs = append(profileArgs, *update.Profile.ImagePath)
+		argPos++
+	}
+	if update.Profile.Points != nil {
+		profileSet = append(profileSet, fmt.Sprintf("points = $%d", argPos))
+		profileArgs = append(profileArgs, *update.Profile.Points)
 		argPos++
 	}
 
-	if update.LastName != nil {
-		setParts = append(setParts, fmt.Sprintf("last_name = $%d", argPos))
-		args = append(args, *update.LastName)
-		argPos++
+	if len(profileSet) > 0 {
+		query := fmt.Sprintf("UPDATE profiles SET %s WHERE user_id = $%d", strings.Join(profileSet, ", "), argPos)
+		profileArgs = append(profileArgs, userID)
+
+		if _, err := pr.DB.Exec(ctx, query, profileArgs...); err != nil {
+			return err
+		}
 	}
 
-	if update.PhoneNumber != nil {
-		setParts = append(setParts, fmt.Sprintf("phone_number = $%d", argPos))
-		args = append(args, *update.PhoneNumber)
-		argPos++
+	userSet := []string{}
+	userArgs := []any{}
+	userPos := 1
+
+	if update.User.Email != nil {
+		userSet = append(userSet, fmt.Sprintf("email = $%d", userPos))
+		userArgs = append(userArgs, update.User.Email)
+		userPos++
+	}
+	if update.User.Password != nil {
+		userSet = append(userSet, fmt.Sprintf("password = $%d", userPos))
+		userArgs = append(userArgs, update.User.Password)
+		userPos++
 	}
 
-	if update.ImagePath != nil {
-		setParts = append(setParts, fmt.Sprintf("image_path = $%d", argPos))
-		args = append(args, *update.ImagePath)
-		argPos++
-	}
+	if len(userSet) > 0 {
+		userSet = append(userSet, "updated_at = NOW()")
+		query := fmt.Sprintf("UPDATE users SET %s WHERE id = $%d", strings.Join(userSet, ", "), userPos)
+		userArgs = append(userArgs, userID)
 
-	if update.Points != nil {
-		setParts = append(setParts, fmt.Sprintf("points = $%d", argPos))
-		args = append(args, *update.Points)
-		argPos++
-	}
-
-	if len(setParts) == 0 {
-		return nil
-	}
-
-	// Update profile
-	query := fmt.Sprintf("UPDATE profile SET %s WHERE user_id = $%d", strings.Join(setParts, ", "), argPos)
-	args = append(args, userID)
-
-	if _, err := pr.DB.Exec(ctx, query, args...); err != nil {
-		return err
-	}
-
-	// Update users.updated_at
-	if _, err := pr.DB.Exec(ctx, "UPDATE users SET updated_at = NOW() WHERE id = $1", userID); err != nil {
-		return err
+		if _, err := pr.DB.Exec(ctx, query, userArgs...); err != nil {
+			return err
+		}
+	} else {
+		if _, err := pr.DB.Exec(ctx, "UPDATE users SET updated_at = NOW() WHERE id = $1", userID); err != nil {
+			return err
+		}
 	}
 
 	return nil
