@@ -45,8 +45,6 @@ func (h *ProfileHandler) UpdateProfile(ctx *gin.Context) {
 
 	userID := claims.UserID
 
-	// var userUpdate models.UserUpdate
-	// var profileUpdate models.ProfileUpdate
 	var update models.UserUpdateRequest
 
 	if err := ctx.ShouldBind(&update); err != nil {
@@ -76,16 +74,18 @@ func (h *ProfileHandler) UpdateProfile(ctx *gin.Context) {
 		}
 	}
 
-	hashedPass, err := bcrypt.GenerateFromPassword([]byte(*update.User.Password), bcrypt.DefaultCost)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"error":   "failed to hash password",
-		})
-		return
+	if update.User.Password != nil {
+		hashedPass, err := bcrypt.GenerateFromPassword([]byte(*update.User.Password), bcrypt.DefaultCost)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"error":   "failed to hash password",
+			})
+			return
+		}
+		hashPassStr := string(hashedPass)
+		update.User.Password = &hashPassStr
 	}
-	hashPassStr := string(hashedPass)
-	update.User.Password = &hashPassStr
 
 	if err := h.repo.UpdateProfile(ctx, userID, &update); err != nil {
 		log.Printf("%s", err)
