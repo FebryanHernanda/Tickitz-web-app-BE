@@ -180,7 +180,7 @@ func (h *MoviesHandler) GetDetailMovies(ctx *gin.Context) {
 
 // GetSchedulesMovies godoc
 // @Summary Get movie schedules
-// @Description Retrieve the schedule of movies; returns 404 if no schedules found
+// @Description Retrieve the schedule of movies
 // @Tags Movies
 // @Produce json
 // @Success 200 {object} models.SuccessResponse
