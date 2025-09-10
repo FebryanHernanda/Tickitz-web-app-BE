@@ -17,4 +17,5 @@ func AdminRouter(r *gin.Engine, adminHandler *handlers.AdminHandler, jwtManager 
 	adminRoutes.GET("/movies/schedule", adminHandler.GetMovieSchedule)
 	adminRoutes.POST("/movies/cinemaschedule/add", adminHandler.AddCinemaSchedule)
 	adminRoutes.DELETE("/movies/delete/:id", adminHandler.DeleteMovies)
+	adminRoutes.PATCH("/movies/edit/:id", adminHandler.UpdateMovies)
 }
