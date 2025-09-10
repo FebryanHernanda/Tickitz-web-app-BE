@@ -6,6 +6,7 @@ import (
 
 	"github.com/FebryanHernanda/Tickitz-web-app-BE/docs"
 	"github.com/FebryanHernanda/Tickitz-web-app-BE/internal/handlers"
+	"github.com/FebryanHernanda/Tickitz-web-app-BE/internal/middlewares"
 	"github.com/FebryanHernanda/Tickitz-web-app-BE/internal/repositories"
 	"github.com/FebryanHernanda/Tickitz-web-app-BE/internal/utils"
 	"github.com/gin-gonic/gin"
@@ -16,6 +17,7 @@ import (
 
 func MainRouter(db *pgxpool.Pool) *gin.Engine {
 	r := gin.Default()
+	r.Use(middlewares.CORSmiddleware)
 
 	// JWT
 	jwtSecret := os.Getenv("JWTKEY")
