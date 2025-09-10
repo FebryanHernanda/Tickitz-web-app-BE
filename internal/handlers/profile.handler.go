@@ -33,10 +33,10 @@ func NewProfileHandler(repo *repositories.ProfileRepository) *ProfileHandler {
 // @Param        last_name    formData  string  false  "Last Name"
 // @Param        phone_number formData  string  false  "Phone Number"
 // @Param        image        formData  file    false  "Profile Image"
-// @Success      200 {object} map[string]interface{} "Profile updated successfully"
-// @Failure      400 {object} map[string]interface{} "Bad Request"
-// @Failure      401 {object} map[string]interface{} "Unauthorized"
-// @Failure      500 {object} map[string]interface{} "Internal Server Error"
+// @Success      200 {object} models.SuccessResponse "Profile updated successfully"
+// @Failure      400 {object} models.ErrorResponse "Bad Request"
+// @Failure      401 {object} models.ErrorResponse "Unauthorized"
+// @Failure      500 {object} models.ErrorResponse "Internal Server Error"
 // @Security     BearerAuth
 // @Router       /profile/edit [patch]
 func (h *ProfileHandler) UpdateProfile(ctx *gin.Context) {
