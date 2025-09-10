@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/FebryanHernanda/Tickitz-web-app-BE/internal/models"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -154,6 +155,101 @@ func (r *AdminRepository) AddCinemaSchedule(ctx context.Context, data []models.C
 		}
 	}
 	return nil
+}
+
+func (r *AdminRepository) UpdateMovies(ctx context.Context, id int, update models.EditMovies) error {
+	dbTx, err := r.DB.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer dbTx.Rollback(ctx)
+
+	updateData := map[string]interface{}{}
+	if update.Title != nil {
+		updateData["title"] = *update.Title
+	}
+	if update.Synopsis != nil {
+		updateData["synopsis"] = *update.Synopsis
+	}
+	if update.ReleaseDate != nil {
+		updateData["release_date"] = *update.ReleaseDate
+	}
+	if update.Rating != nil {
+		updateData["rating"] = *update.Rating
+	}
+	if update.AgeRating != nil {
+		updateData["age_rating"] = *update.AgeRating
+	}
+	if update.Duration != nil {
+		updateData["duration"] = *update.Duration
+	}
+	if update.DirectorID != nil {
+		updateData["director_id"] = *update.DirectorID
+	}
+	if update.PosterPath != nil {
+		updateData["poster_path"] = *update.PosterPath
+	}
+	if update.BackdropPath != nil {
+		updateData["backdrop_path"] = *update.BackdropPath
+	}
+
+	set := []string{}
+	args := []any{}
+	i := 1
+	for k, v := range updateData {
+		set = append(set, fmt.Sprintf("%s = $%d", k, i))
+		args = append(args, v)
+		i++
+	}
+	if len(set) > 0 {
+		query := fmt.Sprintf("UPDATE movies SET %s WHERE id = $%d", strings.Join(set, ", "), i)
+		args = append(args, id)
+		_, err := dbTx.Exec(ctx, query, args...)
+		if err != nil {
+			return err
+		}
+	}
+
+	if update.Genres != nil {
+		_, err = dbTx.Exec(ctx, "DELETE FROM movie_genres WHERE movie_id = $1", id)
+		if err != nil {
+			return err
+		}
+		for _, g := range *update.Genres {
+			_, err := dbTx.Exec(ctx, "INSERT INTO movie_genres (movie_id, genre_id) VALUES ($1, $2)", id, g)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	if update.Casts != nil {
+		_, err = dbTx.Exec(ctx, "DELETE FROM movie_casts WHERE movie_id = $1", id)
+		if err != nil {
+			return err
+		}
+		for _, c := range *update.Casts {
+			_, err := dbTx.Exec(ctx, "INSERT INTO movie_casts (movie_id, cast_id) VALUES ($1, $2)", id, c)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	if update.Schedules != nil {
+		_, err = dbTx.Exec(ctx, "DELETE FROM schedules WHERE movie_id = $1", id)
+		if err != nil {
+			return err
+		}
+		for _, s := range *update.Schedules {
+			_, err := dbTx.Exec(ctx, "INSERT INTO schedules (movie_id, date, time) VALUES ($1, $2, $3)", id, s.Date, s.Time)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return dbTx.Commit(ctx)
 }
 
 func (r *AdminRepository) GetMovieSchedule(ctx context.Context) ([]models.GetSchedule, error) {
