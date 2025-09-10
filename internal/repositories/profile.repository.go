@@ -20,7 +20,6 @@ func NewProfileRepository(db *pgxpool.Pool) *ProfileRepository {
 }
 
 func (pr *ProfileRepository) UpdateProfile(ctx context.Context, userID int, update *models.UserUpdateRequest) error {
-	// --- update profiles ---
 	profileSet := []string{}
 	profileArgs := []any{}
 	argPos := 1
