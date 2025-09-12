@@ -42,8 +42,8 @@ func MainRouter(db *pgxpool.Pool) *gin.Engine {
 	authRepo := repositories.NewUserRepository(db)
 	authHandler := handlers.NewAuthHandler(authRepo, jwtManager)
 	// seat repo & handlers
-	seatRepo := repositories.NewSeatRepository(db)
-	seatHandler := handlers.NewSeatHandler(seatRepo)
+	cinemaRepo := repositories.NewCinemaRepository(db)
+	cinemaHandler := handlers.NewCinemaHandler(cinemaRepo)
 
 	// Register router
 	MoviesRouter(r, movieHandler)
@@ -51,7 +51,7 @@ func MainRouter(db *pgxpool.Pool) *gin.Engine {
 	OrdersRouter(r, ordersHandler, jwtManager)
 	AdminRouter(r, adminHandler, jwtManager)
 	AuthRouter(r, authHandler)
-	SeatsRouter(r, seatHandler)
+	CinemaRouter(r, cinemaHandler)
 
 	// Register Swagger
 	docs.SwaggerInfo.BasePath = "/"
