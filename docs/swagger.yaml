@@ -461,6 +461,45 @@ paths:
       summary: Register a new user
       tags:
       - Authentication
+  /cinemas:
+    get:
+      description: Retrieve cinema schedules filtered by location, date, and time
+        with pagination
+      parameters:
+      - description: Location Filter
+        in: query
+        name: location
+        type: string
+      - description: Date Filter (YYYY-MM-DD)
+        in: query
+        name: date
+        type: string
+      - description: Time Filter (HH:MM)
+        in: query
+        name: time
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Get cinema schedules by filter
+      tags:
+      - Cinemas
   /cinemas/available-seats/{cinemas_schedule_id}:
     get:
       description: Retrieve list of available seats by cinema schedule ID
