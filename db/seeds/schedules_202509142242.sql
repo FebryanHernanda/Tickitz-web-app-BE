@@ -1,0 +1,66 @@
+INSERT INTO public.schedules (id,"date","time",movie_id) VALUES
+	 (1,'2025-09-10','10:00'::public."show_time",1),
+	 (2,'2025-09-10','13:00'::public."show_time",1),
+	 (3,'2025-09-10','16:00'::public."show_time",2),
+	 (4,'2025-09-10','19:00'::public."show_time",2),
+	 (5,'2025-09-11','10:00'::public."show_time",3),
+	 (6,'2025-09-11','19:00'::public."show_time",3),
+	 (7,'2025-09-11','13:00'::public."show_time",4),
+	 (8,'2025-09-11','16:00'::public."show_time",4),
+	 (9,'2025-09-12','22:00'::public."show_time",5),
+	 (10,'2025-09-12','10:00'::public."show_time",6);
+INSERT INTO public.schedules (id,"date","time",movie_id) VALUES
+	 (11,'2025-09-12','19:00'::public."show_time",6),
+	 (12,'2025-09-13','16:00'::public."show_time",7),
+	 (13,'2025-09-13','19:00'::public."show_time",7),
+	 (14,'2025-09-13','22:00'::public."show_time",8),
+	 (15,'2025-09-14','10:00'::public."show_time",9),
+	 (16,'2025-09-14','13:00'::public."show_time",9),
+	 (17,'2025-09-14','16:00'::public."show_time",10),
+	 (18,'2025-09-14','22:00'::public."show_time",10),
+	 (19,'2025-09-15','10:00'::public."show_time",11),
+	 (20,'2025-09-15','13:00'::public."show_time",11);
+INSERT INTO public.schedules (id,"date","time",movie_id) VALUES
+	 (21,'2025-09-15','16:00'::public."show_time",12),
+	 (22,'2025-09-15','19:00'::public."show_time",12),
+	 (23,'2025-09-15','22:00'::public."show_time",13),
+	 (24,'2025-09-16','10:00'::public."show_time",14),
+	 (25,'2025-09-16','13:00'::public."show_time",14),
+	 (26,'2025-09-16','16:00'::public."show_time",15),
+	 (27,'2025-09-16','19:00'::public."show_time",15),
+	 (28,'2025-09-16','22:00'::public."show_time",16),
+	 (29,'2025-09-17','13:00'::public."show_time",17),
+	 (30,'2025-09-17','16:00'::public."show_time",17);
+INSERT INTO public.schedules (id,"date","time",movie_id) VALUES
+	 (31,'2025-09-17','19:00'::public."show_time",18),
+	 (32,'2025-09-17','22:00'::public."show_time",18),
+	 (33,'2025-09-18','10:00'::public."show_time",19),
+	 (34,'2025-09-18','13:00'::public."show_time",19),
+	 (35,'2025-09-18','16:00'::public."show_time",20),
+	 (36,'2025-09-18','19:00'::public."show_time",20),
+	 (37,'2025-09-10','19:00'::public."show_time",21),
+	 (38,'2025-09-11','22:00'::public."show_time",21),
+	 (39,'2025-09-12','16:00'::public."show_time",22),
+	 (40,'2025-09-13','19:00'::public."show_time",22);
+INSERT INTO public.schedules (id,"date","time",movie_id) VALUES
+	 (41,'2025-09-14','13:00'::public."show_time",23),
+	 (42,'2025-09-14','22:00'::public."show_time",23),
+	 (43,'2025-09-15','10:00'::public."show_time",24),
+	 (44,'2025-09-15','16:00'::public."show_time",24),
+	 (45,'2025-09-15','19:00'::public."show_time",25),
+	 (46,'2025-09-16','22:00'::public."show_time",25),
+	 (47,'2025-09-16','13:00'::public."show_time",26),
+	 (48,'2025-09-16','19:00'::public."show_time",26),
+	 (49,'2025-09-17','10:00'::public."show_time",27),
+	 (50,'2025-09-17','16:00'::public."show_time",27);
+INSERT INTO public.schedules (id,"date","time",movie_id) VALUES
+	 (51,'2025-09-18','22:00'::public."show_time",28),
+	 (52,'2025-09-19','10:00'::public."show_time",28),
+	 (53,'2025-09-19','13:00'::public."show_time",29),
+	 (54,'2025-09-19','22:00'::public."show_time",29),
+	 (55,'2025-09-20','19:00'::public."show_time",30),
+	 (56,'2025-09-20','22:00'::public."show_time",30),
+	 (66,'2025-09-10','19:00'::public."show_time",35),
+	 (67,'2025-09-10','22:00'::public."show_time",35),
+	 (68,'2025-10-01','19:00'::public."show_time",36),
+	 (69,'2025-10-01','10:00'::public."show_time",36);

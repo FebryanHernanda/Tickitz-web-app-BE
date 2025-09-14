@@ -1,0 +1,34 @@
+INSERT INTO
+	public.profiles (
+		user_id,
+		first_name,
+		last_name,
+		phone_number,
+		points,
+		image_path
+	)
+VALUES
+	(
+		2,
+		'Febryan',
+		'Hernanda',
+		NULL,
+		0,
+		'public/profile/default.png'
+	),
+	(
+		3,
+		NULL,
+		NULL,
+		NULL,
+		0,
+		'public/profile/default.png'
+	),
+	(
+		6,
+		NULL,
+		NULL,
+		NULL,
+		0,
+		'public/profile/default.png'
+	);
