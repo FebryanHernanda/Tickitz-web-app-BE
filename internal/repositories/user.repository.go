@@ -2,7 +2,6 @@ package repositories
 
 import (
 	"context"
-	"time"
 
 	"github.com/FebryanHernanda/Tickitz-web-app-BE/internal/models"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -19,15 +18,13 @@ func NewUserRepository(db *pgxpool.Pool) *UserRepository {
 }
 
 func (r *UserRepository) RegisterUser(ctx context.Context, user *models.User) error {
-	user.CreatedAt = time.Now()
-	user.UpdatedAt = time.Now()
 
 	queryUser := `
-	INSERT INTO users (email, password, role,  virtual_account, created_at, updated_at)
-    VALUES ($1, $2, $3, $4, $5, $6)
+	INSERT INTO users (email, password, role,  virtual_account)
+    VALUES ($1, $2, $3, $4)
 	RETURNING id
 	`
-	values := []any{user.Email, user.Password, user.Role, user.VirtualAccount, user.CreatedAt, user.UpdatedAt}
+	values := []any{user.Email, user.Password, user.Role, user.VirtualAccount}
 
 	var userID int
 	err := r.DB.QueryRow(ctx, queryUser, values...).Scan(&userID)
