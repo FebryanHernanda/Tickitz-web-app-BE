@@ -17,10 +17,9 @@ type Order struct {
 }
 
 type OrderRequest struct {
-	IsPaid            bool             `json:"is_paid" binding:"required" example:"true"`
-	IsActive          bool             `json:"is_active" binding:"required" example:"true"`
+	IsPaid            bool             `json:"is_paid" `
+	IsActive          bool             `json:"is_active"`
 	TotalPrices       float64          `json:"total_prices" binding:"required" example:"120000"`
-	UserID            int              `json:"user_id" binding:"required" example:"1"`
 	CinemasScheduleID int              `json:"cinemas_schedule_id" binding:"required" example:"1"`
 	PaymentMethodID   int              `json:"payment_method_id" binding:"required" example:"2"`
 	OrderSeats        []OrderSeatInput `json:"seats" binding:"required,dive"`
