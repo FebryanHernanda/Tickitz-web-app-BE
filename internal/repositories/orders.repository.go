@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/FebryanHernanda/Tickitz-web-app-BE/internal/models"
 	"github.com/jackc/pgx/v5"
@@ -19,12 +20,35 @@ func NewOrdersRepository(db *pgxpool.Pool) *OrdersRepository {
 }
 
 func (r *OrdersRepository) CreateOrder(ctx context.Context, order *models.Order) (int, error) {
-	query := `INSERT INTO orders (qr_code, isPaid, isActive, total_prices, user_id, cinemas_schedule_id, payment_method_id)
+	dbTx, err := r.DB.Begin(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("failed begin db transaction : %w", err)
+	}
+	defer dbTx.Rollback(ctx)
+
+	queryOrders := `INSERT INTO orders (qr_code, isPaid, isActive, total_prices, user_id, cinemas_schedule_id, payment_method_id)
 	VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`
 
 	var orderID int
 	values := []any{order.QRCode, order.IsPaid, order.IsActive, order.TotalPrices, order.UserID, order.CinemasScheduleID, order.PaymentMethodID}
-	err := r.DB.QueryRow(ctx, query, values...).Scan(&orderID)
+	err = dbTx.QueryRow(ctx, queryOrders, values...).Scan(&orderID)
+	if err != nil {
+		return 0, err
+	}
+
+	querySeats := `INSERT INTO orders_seats (status, order_id, seat_id) VALUES ($1, $2, $3)`
+
+	for _, seat := range order.OrderSeats {
+		values := []any{seat.Status, orderID, seat.SeatID}
+		_, err := dbTx.Exec(ctx, querySeats, values...)
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	if err := dbTx.Commit(ctx); err != nil {
+		return 0, err
+	}
 
 	return orderID, err
 }
@@ -45,20 +69,6 @@ func (r *OrdersRepository) AreSeatsAvailable(ctx context.Context, cinemaSchedule
 		return false, err
 	}
 	return err == pgx.ErrNoRows, nil
-}
-
-func (r *OrdersRepository) CreateOrderSeats(ctx context.Context, orderID int, seats []models.OrderSeatInput) error {
-	query := `INSERT INTO orders_seats (status, order_id, seat_id) VALUES ($1, $2, $3)`
-
-	for _, seat := range seats {
-		values := []any{seat.Status, orderID, seat.SeatID}
-		_, err := r.DB.Exec(ctx, query, values...)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 func (r *OrdersRepository) GetOrdersHistory(ctx context.Context, userID int) ([]models.OrderHistory, error) {
