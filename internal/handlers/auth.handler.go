@@ -1,25 +1,31 @@
 package handlers
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/FebryanHernanda/Tickitz-web-app-BE/internal/models"
 	"github.com/FebryanHernanda/Tickitz-web-app-BE/internal/repositories"
 	"github.com/FebryanHernanda/Tickitz-web-app-BE/internal/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthHandler struct {
 	repo       *repositories.UserRepository
 	JWTManager *utils.JWTManager
+	rdb        *redis.Client
 }
 
-func NewAuthHandler(repo *repositories.UserRepository, jwtManager *utils.JWTManager) *AuthHandler {
+func NewAuthHandler(repo *repositories.UserRepository, jwtManager *utils.JWTManager, rdb *redis.Client) *AuthHandler {
 	return &AuthHandler{
 		repo:       repo,
 		JWTManager: jwtManager,
+		rdb:        rdb,
 	}
 }
 
@@ -165,4 +171,45 @@ func (u *AuthHandler) Login(ctx *gin.Context) {
 		"token":   token,
 	})
 
+}
+
+// Logout godoc
+// @Summary Logout user and invalidate JWT token
+// @Description Invalidate the JWT token by adding it to Redis blacklist so it cannot be used again
+// @Tags Authentication
+// @Accept json
+// @Produce json
+// @Security     BearerAuth
+// @Success 200 {object} models.SuccessResponse "Logout successful"
+// @Failure 401 {object} models.ErrorResponse "Token is required or unauthorized"
+// @Failure 500 {object} models.ErrorResponse "Internal server error during logout"
+// @Router /auth/logout [post]
+func (u *AuthHandler) Logout(ctx *gin.Context) {
+	authHeader := ctx.GetHeader("Authorization")
+	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+	tokenString = strings.TrimSpace(tokenString)
+
+	redisKey := fmt.Sprintf("blacklist:%s", tokenString)
+
+	if tokenString == "" {
+		ctx.JSON(http.StatusUnauthorized, gin.H{
+			"success": false,
+			"error":   "Token is required",
+		})
+		return
+	}
+
+	err := utils.SetCache(ctx, u.rdb, redisKey, true, 30*time.Minute)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   "failed to logout",
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "Logout successful",
+	})
 }
