@@ -3,6 +3,7 @@ package models
 type Profile struct {
 	ID             int     `json:"id"`
 	Email          string  `json:"email"`
+	Password       string  `json:"-"`
 	Role           string  `json:"role"`
 	VirtualAccount string  `json:"virtual_account"`
 	FirstName      *string `json:"first_name"`
@@ -13,8 +14,9 @@ type Profile struct {
 }
 
 type UserUpdate struct {
-	Email    *string `form:"email" json:"email"`
-	Password *string `form:"password" json:"password"`
+	Email       *string `form:"email" json:"email"`
+	OldPassword *string `form:"old_password" json:"old_password"`
+	NewPassword *string `form:"new_password" json:"new_password"`
 }
 
 type ProfileUpdate struct {
