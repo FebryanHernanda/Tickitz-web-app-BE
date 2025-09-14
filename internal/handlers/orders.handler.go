@@ -1,21 +1,26 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
+	"time"
 
 	"github.com/FebryanHernanda/Tickitz-web-app-BE/internal/models"
 	"github.com/FebryanHernanda/Tickitz-web-app-BE/internal/repositories"
 	"github.com/FebryanHernanda/Tickitz-web-app-BE/internal/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 )
 
 type OrdersHandler struct {
 	repo *repositories.OrdersRepository
+	rdb  *redis.Client
 }
 
-func NewOrdersHandler(repo *repositories.OrdersRepository) *OrdersHandler {
+func NewOrdersHandler(repo *repositories.OrdersRepository, rdb *redis.Client) *OrdersHandler {
 	return &OrdersHandler{
 		repo: repo,
+		rdb:  rdb,
 	}
 }
 
@@ -35,6 +40,9 @@ func NewOrdersHandler(repo *repositories.OrdersRepository) *OrdersHandler {
 // @Failure 500 {object} models.ErrorResponse
 // @Router /orders [post]
 func (h *OrdersHandler) CreateOrder(ctx *gin.Context) {
+	rawClaims, _ := ctx.Get("claims")
+	claims := rawClaims.(*utils.Claims)
+
 	var req models.OrderRequest
 	if err := ctx.ShouldBind(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -51,7 +59,7 @@ func (h *OrdersHandler) CreateOrder(ctx *gin.Context) {
 		IsPaid:            req.IsPaid,
 		IsActive:          req.IsActive,
 		TotalPrices:       req.TotalPrices,
-		UserID:            req.UserID,
+		UserID:            claims.UserID,
 		CinemasScheduleID: req.CinemasScheduleID,
 		PaymentMethodID:   req.PaymentMethodID,
 		OrderSeats:        req.OrderSeats,
@@ -87,15 +95,6 @@ func (h *OrdersHandler) CreateOrder(ctx *gin.Context) {
 		return
 	}
 
-	err = h.repo.CreateOrderSeats(ctx, orderID, order.OrderSeats)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"error":   err.Error(),
-		})
-		return
-	}
-
 	order.ID = orderID
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "Order created successfully",
@@ -121,8 +120,26 @@ func (h *OrdersHandler) GetOrdersHistory(ctx *gin.Context) {
 
 	userID := claims.UserID
 
+	redisKey := "users:order-history"
+	var cached []models.OrderHistory
+	if h.rdb != nil {
+		err := utils.GetCache(ctx, h.rdb, redisKey, &cached)
+		if err != nil {
+			log.Println("Redis error, back to DB : ", err)
+		}
+		if len(cached) > 0 {
+			ctx.JSON(http.StatusOK, gin.H{
+				"success": true,
+				"data":    cached,
+				"message": "data from cache",
+			})
+			return
+		}
+	}
+
 	orderHistory, err := h.repo.GetOrdersHistory(ctx, userID)
 	if err != nil {
+		log.Println("ERROR GET HISTORY:", err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"error":   "Failed to get order history",
@@ -138,8 +155,16 @@ func (h *OrdersHandler) GetOrdersHistory(ctx *gin.Context) {
 		return
 	}
 
+	if h.rdb != nil {
+		err := utils.SetCache(ctx, h.rdb, redisKey, orderHistory, 10*time.Minute)
+		if err != nil {
+			log.Println("Redis set cache error:", err)
+		}
+	}
+
 	ctx.JSON(http.StatusOK, gin.H{
 		"success": true,
+		"message": "data from database",
 		"data":    orderHistory,
 	})
 }
