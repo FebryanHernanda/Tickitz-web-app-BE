@@ -5,20 +5,24 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/FebryanHernanda/Tickitz-web-app-BE/internal/models"
 	"github.com/FebryanHernanda/Tickitz-web-app-BE/internal/repositories"
 	"github.com/FebryanHernanda/Tickitz-web-app-BE/internal/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 )
 
 type AdminHandler struct {
 	repo *repositories.AdminRepository
+	rdb  *redis.Client
 }
 
-func NewAdminHandler(repo *repositories.AdminRepository) *AdminHandler {
+func NewAdminHandler(repo *repositories.AdminRepository, rdb *redis.Client) *AdminHandler {
 	return &AdminHandler{
 		repo: repo,
+		rdb:  rdb,
 	}
 }
 
@@ -28,15 +32,31 @@ func NewAdminHandler(repo *repositories.AdminRepository) *AdminHandler {
 // @Tags         Admin
 // @Security     BearerAuth
 // @Produce      json
-// @Param        Authorization header string true "Bearer token" default(Bearer <your_token_here>)
 // @Success      200  {object}  models.SuccessResponse
 // @Failure      401  {object}  models.ErrorResponse
 // @Failure      404  {object}  models.ErrorResponse
 // @Failure      500  {object}  models.ErrorResponse
 // @Router       /admin/movies [get]
-func (a *AdminHandler) GetAllMovies(ctx *gin.Context) {
+func (h *AdminHandler) GetAllMovies(ctx *gin.Context) {
+	redisKey := "admin:all-movies"
+	var cached []models.AdminMovies
 
-	allMovies, err := a.repo.GetAllMovies(ctx)
+	if h.rdb != nil {
+		err := utils.GetCache(ctx, h.rdb, redisKey, &cached)
+		if err != nil {
+			log.Println("Redis error, back to DB : ", err)
+		}
+		if len(cached) > 0 {
+			ctx.JSON(http.StatusOK, gin.H{
+				"success": true,
+				"data":    cached,
+				"message": "data from cache",
+			})
+			return
+		}
+	}
+
+	allMovies, err := h.repo.GetAllMovies(ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
@@ -53,8 +73,16 @@ func (a *AdminHandler) GetAllMovies(ctx *gin.Context) {
 		return
 	}
 
+	if h.rdb != nil {
+		err := utils.SetCache(ctx, h.rdb, redisKey, allMovies, 10*time.Minute)
+		if err != nil {
+			log.Println("Redis set cache error:", err)
+		}
+	}
+
 	ctx.JSON(http.StatusOK, gin.H{
 		"success": true,
+		"message": "data from database",
 		"data":    allMovies,
 	})
 }
@@ -62,6 +90,7 @@ func (a *AdminHandler) GetAllMovies(ctx *gin.Context) {
 // AddMovie godoc
 // @Summary      Add New Movie
 // @Description  Add Movies with all the relations (genres, cast, and schedules)
+// @Description  Schedule Time ENUM [10:00,13:00,16:00,19:00,22:00]
 // @Tags         Admin
 // @Security     BearerAuth
 // @Accept       multipart/form-data
@@ -179,6 +208,23 @@ func (h *AdminHandler) AddMovies(ctx *gin.Context) {
 // @Failure      500  {object}  models.ErrorResponse
 // @Router       /admin/movies/schedule [get]
 func (h *AdminHandler) GetMovieSchedule(ctx *gin.Context) {
+	redisKey := "admin:movies-schedule"
+	var cached []models.GetSchedule
+
+	if h.rdb != nil {
+		err := utils.GetCache(ctx, h.rdb, redisKey, &cached)
+		if err != nil {
+			log.Println("Redis error, back to DB : ", err)
+		}
+		if len(cached) > 0 {
+			ctx.JSON(http.StatusOK, gin.H{
+				"success": true,
+				"data":    cached,
+				"message": "data from cache",
+			})
+			return
+		}
+	}
 	schedules, err := h.repo.GetMovieSchedule(ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
@@ -188,15 +234,23 @@ func (h *AdminHandler) GetMovieSchedule(ctx *gin.Context) {
 		return
 	}
 
+	if h.rdb != nil {
+		err := utils.SetCache(ctx, h.rdb, redisKey, schedules, 10*time.Minute)
+		if err != nil {
+			log.Println("Redis set cache error:", err)
+		}
+	}
+
 	ctx.JSON(http.StatusOK, gin.H{
 		"success": true,
+		"message": "data from database",
 		"data":    schedules,
 	})
 }
 
 // UpdateMovie godoc
 // @Summary      Update movie with file upload
-// @Description  Update movie data by ID, allow uploading poster and backdrop
+// @Description  Update movie data by ID, allow uploading poster and backdrop.
 // @Tags         Admin
 // @Security     BearerAuth
 // @Accept       multipart/form-data
@@ -220,7 +274,31 @@ func (h *AdminHandler) GetMovieSchedule(ctx *gin.Context) {
 // @Failure      500           {object}  models.ErrorResponse
 // @Router       /admin/movies/edit/{id} [patch]
 func (h *AdminHandler) UpdateMovies(ctx *gin.Context) {
-	MovieID, _ := strconv.Atoi(ctx.Param("id"))
+	MovieID, err := strconv.Atoi(ctx.Param("id"))
+	if err != nil || MovieID < 1 {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Invalid movie ID",
+		})
+		return
+	}
+
+	exist, err := h.repo.IsMoviesExists(ctx, MovieID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	if !exist {
+		ctx.JSON(http.StatusNotFound, gin.H{
+			"success": false,
+			"error":   "Movie ID not found",
+		})
+		return
+	}
 
 	var update models.EditMovies
 	if err := ctx.ShouldBind(&update); err != nil {
@@ -328,6 +406,25 @@ func (h *AdminHandler) AddCinemaSchedule(ctx *gin.Context) {
 			"error":   err.Error(),
 		})
 		return
+	}
+
+	for _, cs := range CinemaSchedules {
+		exist, err := h.repo.IsScheduleExists(ctx, cs.ScheduleID)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"error":   err.Error(),
+			})
+			return
+		}
+
+		if !exist {
+			ctx.JSON(http.StatusNotFound, gin.H{
+				"success": false,
+				"error":   "Schedule ID not found",
+			})
+			return
+		}
 	}
 
 	err := h.repo.AddCinemaSchedule(ctx, CinemaSchedules)
