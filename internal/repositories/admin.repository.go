@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/FebryanHernanda/Tickitz-web-app-BE/internal/models"
@@ -17,6 +18,32 @@ func NewAdminRepository(db *pgxpool.Pool) *AdminRepository {
 	return &AdminRepository{
 		DB: db,
 	}
+}
+
+// helper
+func (r *AdminRepository) IsMoviesExists(ctx context.Context, movieID int) (bool, error) {
+	var exist bool
+	query := `SELECT EXISTS(SELECT 1 FROM movies WHERE id = $1)`
+	err := r.DB.QueryRow(ctx, query, movieID).Scan(&exist)
+	if err != nil {
+		log.Printf("ERROR \nCause :  %s", err)
+		return false, err
+	}
+
+	return exist, nil
+}
+
+// helper
+func (r *AdminRepository) IsScheduleExists(ctx context.Context, scheduleID int) (bool, error) {
+	var exist bool
+	query := `SELECT EXISTS(SELECT 1 FROM schedules WHERE id = $1)`
+	err := r.DB.QueryRow(ctx, query, scheduleID).Scan(&exist)
+	if err != nil {
+		log.Printf("ERROR \nCause :  %s", err)
+		return false, err
+	}
+
+	return exist, nil
 }
 
 func (r *AdminRepository) GetAllMovies(ctx context.Context) ([]models.AdminMovies, error) {
@@ -35,9 +62,9 @@ func (r *AdminRepository) GetAllMovies(ctx context.Context) ([]models.AdminMovie
 			sch.date AS date_playing, 
 			l.name AS location_name,
             cnm.name AS cinema_name,
-            ARRAY_AGG(DISTINCT sch.time ORDER BY sch.time ASC) AS time_playing,
-            ARRAY_AGG(DISTINCT c.name) AS casts,
-            ARRAY_AGG(DISTINCT g.name) AS genres
+			COALESCE(ARRAY_AGG(DISTINCT sch.time ORDER BY sch.time ASC) FILTER (WHERE sch.time IS NOT NULL),'{}') AS time_playing,
+			COALESCE(ARRAY_AGG(DISTINCT c.name) FILTER (WHERE c.name IS NOT NULL),'{}') AS casts,
+			COALESCE(ARRAY_AGG(DISTINCT g.name) FILTER (WHERE g.name IS NOT NULL),'{}') AS genres
         FROM movies m
             LEFT JOIN movies_genres mg ON m.id = mg.movie_id
             LEFT JOIN genres g ON mg.genre_id = g.id
@@ -60,6 +87,7 @@ func (r *AdminRepository) GetAllMovies(ctx context.Context) ([]models.AdminMovie
 
 	for rows.Next() {
 		var am models.AdminMovies
+
 		err := rows.Scan(
 			&am.ID,
 			&am.Title,
@@ -81,6 +109,7 @@ func (r *AdminRepository) GetAllMovies(ctx context.Context) ([]models.AdminMovie
 		if err != nil {
 			return nil, err
 		}
+
 		allMovies = append(allMovies, am)
 	}
 
@@ -92,11 +121,7 @@ func (r *AdminRepository) AddMovies(ctx context.Context, movie *models.AddMovies
 	if err != nil {
 		return nil, fmt.Errorf("failed begin db transaction : %w", err)
 	}
-	defer func() {
-		if err != nil {
-			dbTx.Rollback(ctx)
-		}
-	}()
+	defer dbTx.Rollback(ctx)
 
 	var movieID int
 
@@ -211,12 +236,12 @@ func (r *AdminRepository) UpdateMovies(ctx context.Context, id int, update model
 	}
 
 	if update.Genres != nil {
-		_, err = dbTx.Exec(ctx, "DELETE FROM movie_genres WHERE movie_id = $1", id)
+		_, err = dbTx.Exec(ctx, "DELETE FROM movies_genres WHERE movie_id = $1", id)
 		if err != nil {
 			return err
 		}
 		for _, g := range *update.Genres {
-			_, err := dbTx.Exec(ctx, "INSERT INTO movie_genres (movie_id, genre_id) VALUES ($1, $2)", id, g)
+			_, err := dbTx.Exec(ctx, "INSERT INTO movies_genres (movie_id, genre_id) VALUES ($1, $2)", id, g)
 			if err != nil {
 				return err
 			}
@@ -224,12 +249,12 @@ func (r *AdminRepository) UpdateMovies(ctx context.Context, id int, update model
 	}
 
 	if update.Casts != nil {
-		_, err = dbTx.Exec(ctx, "DELETE FROM movie_casts WHERE movie_id = $1", id)
+		_, err = dbTx.Exec(ctx, "DELETE FROM movies_cast WHERE movie_id = $1", id)
 		if err != nil {
 			return err
 		}
 		for _, c := range *update.Casts {
-			_, err := dbTx.Exec(ctx, "INSERT INTO movie_casts (movie_id, cast_id) VALUES ($1, $2)", id, c)
+			_, err := dbTx.Exec(ctx, "INSERT INTO movies_cast (movie_id, cast_id) VALUES ($1, $2)", id, c)
 			if err != nil {
 				return err
 			}
@@ -253,7 +278,16 @@ func (r *AdminRepository) UpdateMovies(ctx context.Context, id int, update model
 }
 
 func (r *AdminRepository) GetMovieSchedule(ctx context.Context) ([]models.GetSchedule, error) {
-	query := `SELECT id, date, time, movie_id FROM schedules`
+	query := `
+	SELECT 
+		s.id, 
+		s.date, s.
+		time, 
+		s.movie_id, 
+		m.title AS movie_title
+	FROM schedules s
+	JOIN movies m  ON s.movie_id = m.id
+	`
 
 	rows, err := r.DB.Query(ctx, query)
 	if err != nil {
@@ -269,6 +303,7 @@ func (r *AdminRepository) GetMovieSchedule(ctx context.Context) ([]models.GetSch
 			&sch.Date,
 			&sch.Time,
 			&sch.MovieID,
+			&sch.MovieName,
 		)
 		if err != nil {
 			return nil, err
