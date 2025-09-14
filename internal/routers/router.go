@@ -11,11 +11,12 @@ import (
 	"github.com/FebryanHernanda/Tickitz-web-app-BE/internal/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redis/go-redis/v9"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-func MainRouter(db *pgxpool.Pool) *gin.Engine {
+func MainRouter(db *pgxpool.Pool, rdb *redis.Client) *gin.Engine {
 	r := gin.Default()
 	r.Use(middlewares.CORSmiddleware)
 
@@ -28,29 +29,29 @@ func MainRouter(db *pgxpool.Pool) *gin.Engine {
 
 	// Movies repo & handlers
 	movieRepo := repositories.NewMovieRepository(db)
-	movieHandler := handlers.NewMoviesHandler(movieRepo)
+	movieHandler := handlers.NewMoviesHandler(movieRepo, rdb)
 	// Profile repo & handlers
 	profileRepo := repositories.NewProfileRepository(db)
-	profileHandler := handlers.NewProfileHandler(profileRepo)
+	profileHandler := handlers.NewProfileHandler(profileRepo, rdb)
 	// Orders repo & handlers
 	ordersRepo := repositories.NewOrdersRepository(db)
-	ordersHandler := handlers.NewOrdersHandler(ordersRepo)
+	ordersHandler := handlers.NewOrdersHandler(ordersRepo, rdb)
 	// Admin repo & handlers
 	adminRepo := repositories.NewAdminRepository(db)
-	adminHandler := handlers.NewAdminHandler(adminRepo)
+	adminHandler := handlers.NewAdminHandler(adminRepo, rdb)
 	// auth repo & handlers
 	authRepo := repositories.NewUserRepository(db)
-	authHandler := handlers.NewAuthHandler(authRepo, jwtManager)
+	authHandler := handlers.NewAuthHandler(authRepo, jwtManager, rdb)
 	// seat repo & handlers
 	cinemaRepo := repositories.NewCinemaRepository(db)
-	cinemaHandler := handlers.NewCinemaHandler(cinemaRepo)
+	cinemaHandler := handlers.NewCinemaHandler(cinemaRepo, rdb)
 
 	// Register router
 	MoviesRouter(r, movieHandler)
-	ProfileRouter(r, profileHandler, jwtManager)
-	OrdersRouter(r, ordersHandler, jwtManager)
-	AdminRouter(r, adminHandler, jwtManager)
-	AuthRouter(r, authHandler)
+	ProfileRouter(r, profileHandler, jwtManager, rdb)
+	OrdersRouter(r, ordersHandler, jwtManager, rdb)
+	AdminRouter(r, adminHandler, jwtManager, rdb)
+	AuthRouter(r, jwtManager, rdb, authHandler)
 	CinemaRouter(r, cinemaHandler)
 
 	// Register Swagger
