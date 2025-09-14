@@ -3,22 +3,22 @@ package models
 import "time"
 
 type AdminMovies struct {
-	ID           int       `json:"id"`
-	Title        string    `json:"title"`
-	PosterPath   string    `json:"poster_path"`
-	BackdropPath string    `json:"backdrop_path"`
-	Synopsis     string    `json:"synopsis"`
-	ReleaseDate  time.Time `json:"release_date"`
-	Rating       float64   `json:"rating"`
-	AgeRating    string    `json:"age_rating"`
-	Duration     int       `json:"duration"`
-	Director     string    `json:"director"`
-	DatePlaying  time.Time `json:"date_playing"`
-	LocationName *string   `json:"location_name,omitempty"`
-	CinemaName   *string   `json:"cinema_name,omitempty"`
-	TimePlaying  []string  `json:"time_playing"`
-	Casts        []string  `json:"casts"`
-	Genres       []string  `json:"genres"`
+	ID           int        `json:"id"`
+	Title        string     `json:"title"`
+	PosterPath   string     `json:"poster_path"`
+	BackdropPath string     `json:"backdrop_path"`
+	Synopsis     string     `json:"synopsis"`
+	ReleaseDate  time.Time  `json:"release_date"`
+	Rating       float64    `json:"rating"`
+	AgeRating    string     `json:"age_rating"`
+	Duration     int        `json:"duration"`
+	Director     string     `json:"director"`
+	DatePlaying  *time.Time `json:"date_playing,omitempty"`
+	LocationName *string    `json:"location_name,omitempty"`
+	CinemaName   *string    `json:"cinema_name,omitempty"`
+	TimePlaying  []string   `json:"time_playing"`
+	Casts        []string   `json:"casts"`
+	Genres       []string   `json:"genres"`
 }
 
 type AddMovies struct {
@@ -63,8 +63,9 @@ type CinemaScheduleLocation struct {
 }
 
 type GetSchedule struct {
-	ID      int       `json:"id" example:"1"`
-	Date    time.Time `json:"date" example:"2025-09-10"`
-	Time    string    `json:"time" example:"18:00"`
-	MovieID int       `json:"movie_id" example:"1"`
+	ID        int       `json:"id" example:"1"`
+	Date      time.Time `json:"date" example:"2025-09-10"`
+	Time      string    `json:"time" example:"18:00"`
+	MovieID   int       `json:"movie_id" example:"1"`
+	MovieName string    `json:"title"`
 }
