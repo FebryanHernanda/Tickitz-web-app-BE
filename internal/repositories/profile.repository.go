@@ -68,9 +68,9 @@ func (pr *ProfileRepository) UpdateProfile(ctx context.Context, userID int, upda
 		userArgs = append(userArgs, update.User.Email)
 		userPos++
 	}
-	if update.User.Password != nil {
+	if update.User.NewPassword != nil {
 		userSet = append(userSet, fmt.Sprintf("password = $%d", userPos))
-		userArgs = append(userArgs, update.User.Password)
+		userArgs = append(userArgs, update.User.NewPassword)
 		userPos++
 	}
 
@@ -96,6 +96,7 @@ func (pr *ProfileRepository) GetProfile(ctx context.Context, userID int) (*model
         SELECT
             u.id,
             u.email,
+			u.password,
             u.role,
             u.virtual_account,
             p.first_name,
@@ -113,6 +114,7 @@ func (pr *ProfileRepository) GetProfile(ctx context.Context, userID int) (*model
 	err := rows.Scan(
 		&userProfile.ID,
 		&userProfile.Email,
+		&userProfile.Password,
 		&userProfile.Role,
 		&userProfile.VirtualAccount,
 		&userProfile.FirstName,
