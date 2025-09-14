@@ -24,7 +24,16 @@ func main() {
 	}
 	defer db.Close()
 
-	r := routers.MainRouter(db)
+	rdb, err := configs.InitRedis()
+	if err != nil {
+		log.Println("RDB init failed:", err)
+	}
+
+	if rdb != nil {
+		defer rdb.Close()
+	}
+
+	r := routers.MainRouter(db, rdb)
 
 	r.Run(":8080")
 }
