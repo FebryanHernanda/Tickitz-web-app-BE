@@ -31,7 +31,7 @@ func (mr *MoviesRepository) GetUpcomingMovies(ctx context.Context) ([]models.Mov
 		JOIN movies_genres mg ON m.id = mg.movie_id
 		JOIN genres g ON mg.genre_id = g.id
 	WHERE
-    	release_date > '2012-12-12'
+    	release_date > NOW()
 	GROUP BY
     	m.id;
 	`
@@ -122,7 +122,7 @@ func (mr *MoviesRepository) GetMoviesByFilter(ctx context.Context, search, genre
             ($1 = '' OR m.title ILIKE '%' || $1 || '%')
             AND ($2 = '' OR g.name ILIKE '%' || $2 || '%')
         GROUP BY m.id
-        ORDER BY m.release_date DESC
+        ORDER BY m.release_date ASC
         LIMIT $3 OFFSET $4;
     `
 	values := []any{search, genre, limit, offset}
