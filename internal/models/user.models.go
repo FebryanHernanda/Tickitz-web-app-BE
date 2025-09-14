@@ -1,15 +1,11 @@
 package models
 
-import "time"
-
 type User struct {
-	ID             int       `json:"id"`
-	Email          string    `json:"email"`
-	Role           string    `json:"role"`
-	Password       string    `json:"password"`
-	VirtualAccount string    `json:"virtual_account"`
-	CreatedAt      time.Time `json:"created_at"`
-	UpdatedAt      time.Time `json:"updated_at"`
+	ID             int    `json:"id"`
+	Email          string `json:"email"`
+	Role           string `json:"role"`
+	Password       string `json:"password"`
+	VirtualAccount string `json:"virtual_account"`
 }
 
 type RegisterUser struct {
