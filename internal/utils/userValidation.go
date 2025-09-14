@@ -27,12 +27,12 @@ func IsValidPassword(password string) error {
 
 	reUppercase := regexp.MustCompile(`[A-Z]`)
 	if !reUppercase.MatchString(password) {
-		return errors.New("password harus mengandung huruf besar")
+		return errors.New("password must contain capital letters")
 	}
 
 	reLowercase := regexp.MustCompile(`[a-z]`)
 	if !reLowercase.MatchString(password) {
-		return errors.New("password must contain capital letters")
+		return errors.New("password must contain lowercase letters")
 	}
 
 	reNumber := regexp.MustCompile(`[0-9]`)
