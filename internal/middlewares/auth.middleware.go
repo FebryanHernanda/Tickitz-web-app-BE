@@ -7,10 +7,11 @@ import (
 
 	"github.com/FebryanHernanda/Tickitz-web-app-BE/internal/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 )
 
 // get token from header and verify that
-func VerifyToken(jwtManager *utils.JWTManager) gin.HandlerFunc {
+func VerifyToken(jwtManager *utils.JWTManager, rdb *redis.Client) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		authHeader := ctx.GetHeader("Authorization")
 		parts := strings.Fields(authHeader)
@@ -19,6 +20,24 @@ func VerifyToken(jwtManager *utils.JWTManager) gin.HandlerFunc {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"success": false,
 				"error":   "Please login according to your role",
+			})
+			return
+		}
+
+		tokenString := parts[1]
+		// check blacklist token
+		exists, err := rdb.Exists(ctx, "blacklist:"+tokenString).Result()
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"error":   "Server error",
+			})
+			return
+		}
+		if exists > 0 {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"error":   "Token Invalid, please login again",
 			})
 			return
 		}
