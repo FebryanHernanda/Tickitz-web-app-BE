@@ -5,11 +5,12 @@ import (
 	"github.com/FebryanHernanda/Tickitz-web-app-BE/internal/middlewares"
 	"github.com/FebryanHernanda/Tickitz-web-app-BE/internal/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 )
 
-func AdminRouter(r *gin.Engine, adminHandler *handlers.AdminHandler, jwtManager *utils.JWTManager) {
+func AdminRouter(r *gin.Engine, adminHandler *handlers.AdminHandler, jwtManager *utils.JWTManager, rdb *redis.Client) {
 	adminRoutes := r.Group("/admin")
-	adminRoutes.Use(middlewares.VerifyToken(jwtManager))
+	adminRoutes.Use(middlewares.VerifyToken(jwtManager, rdb))
 	adminRoutes.Use(middlewares.AuthMiddleware("admin"))
 
 	adminRoutes.GET("/movies", adminHandler.GetAllMovies)
