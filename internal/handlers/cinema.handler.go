@@ -1,22 +1,28 @@
 package handlers
 
 import (
+	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/FebryanHernanda/Tickitz-web-app-BE/internal/models"
 	"github.com/FebryanHernanda/Tickitz-web-app-BE/internal/repositories"
+	"github.com/FebryanHernanda/Tickitz-web-app-BE/internal/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 )
 
 type CinemaHandler struct {
 	repo *repositories.CinemaRepository
+	rdb  *redis.Client
 }
 
-func NewCinemaHandler(repo *repositories.CinemaRepository) *CinemaHandler {
+func NewCinemaHandler(repo *repositories.CinemaRepository, rdb *redis.Client) *CinemaHandler {
 	return &CinemaHandler{
 		repo: repo,
+		rdb:  rdb,
 	}
 }
 
@@ -32,6 +38,7 @@ func NewCinemaHandler(repo *repositories.CinemaRepository) *CinemaHandler {
 // @Router       /cinemas/available-seats/{cinemas_schedule_id} [get]
 func (h *CinemaHandler) GetAvailableSeats(ctx *gin.Context) {
 	cinemaSchedulesIDStr := ctx.Param("cinemas_schedule_id")
+
 	cinemaSchedulesID, err := strconv.Atoi(cinemaSchedulesIDStr)
 	if err != nil || cinemaSchedulesID <= 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -58,6 +65,24 @@ func (h *CinemaHandler) GetAvailableSeats(ctx *gin.Context) {
 		return
 	}
 
+	redisKey := fmt.Sprintf("cinemas-available-seats:%d", cinemaSchedulesID)
+	var cached []models.CinemaSeat
+
+	if h.rdb != nil {
+		err := utils.GetCache(ctx, h.rdb, redisKey, &cached)
+		if err != nil {
+			log.Println("Redis error, back to DB : ", err)
+		}
+		if len(cached) != 0 {
+			ctx.JSON(http.StatusOK, gin.H{
+				"success": true,
+				"data":    cached,
+				"message": "data from cache",
+			})
+			return
+		}
+	}
+
 	seats, err := h.repo.GetAvailableSeats(ctx, cinemaSchedulesID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
@@ -73,6 +98,13 @@ func (h *CinemaHandler) GetAvailableSeats(ctx *gin.Context) {
 			"message": "All seats are available",
 		})
 		return
+	}
+
+	if h.rdb != nil {
+		err := utils.SetCache(ctx, h.rdb, redisKey, seats, 2*time.Minute)
+		if err != nil {
+			log.Println("Redis set cache error:", err)
+		}
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
@@ -106,6 +138,38 @@ func (h *CinemaHandler) GetScheduleFilter(ctx *gin.Context) {
 	limit := 5
 	offset := (page - 1) * limit
 
+	locationCache := location
+	dateCache := dateStr
+	timeCache := timeStr
+
+	if location == "" {
+		locationCache = "<empty>"
+	}
+	if dateStr == "" {
+		dateCache = "<empty>"
+	}
+	if timeStr == "" {
+		timeCache = "<empty>"
+	}
+
+	redisKey := fmt.Sprintf("cinema-schedule:loc=%s:date=%s:time=%s:page=%d", locationCache, dateCache, timeCache, page)
+
+	var cached []models.GetFilterSchedules
+	if h.rdb != nil {
+		err := utils.GetCache(ctx, h.rdb, redisKey, &cached)
+		if err != nil {
+			log.Println("Redis error, back to DB : ", err)
+		}
+		if len(cached) > 0 {
+			ctx.JSON(http.StatusOK, gin.H{
+				"success": true,
+				"data":    cached,
+				"message": "data from cache",
+			})
+			return
+		}
+	}
+
 	var filter models.GetFilterSchedules
 	if location != "" {
 		filter.LocationName = &location
@@ -137,6 +201,12 @@ func (h *CinemaHandler) GetScheduleFilter(ctx *gin.Context) {
 	}
 
 	if len(schedule) == 0 {
+		if h.rdb != nil {
+			err := utils.SetCache(ctx, h.rdb, redisKey, []models.GetFilterSchedules{}, 5*time.Minute)
+			if err != nil {
+				log.Println("Redis set cache error:", err)
+			}
+		}
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"success": false,
 			"message": "No schedules found",
@@ -146,8 +216,16 @@ func (h *CinemaHandler) GetScheduleFilter(ctx *gin.Context) {
 		return
 	}
 
+	if h.rdb != nil {
+		err := utils.SetCache(ctx, h.rdb, redisKey, schedule, 5*time.Minute)
+		if err != nil {
+			log.Println("Redis set cache error:", err)
+		}
+	}
+
 	ctx.JSON(http.StatusOK, gin.H{
 		"success": true,
+		"message": "data from database",
 		"data":    schedule,
 		"page":    page,
 		"limit":   limit,
