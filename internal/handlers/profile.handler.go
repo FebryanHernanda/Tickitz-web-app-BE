@@ -111,7 +111,7 @@ func (h *ProfileHandler) UpdateProfile(ctx *gin.Context) {
 	}
 
 	// file upload
-	savePath, err := utils.UploadFile(ctx, "image", "public/profile", "profile")
+	savePath, err := utils.UploadFile(ctx, "image", "public/profile", "profile", "profile")
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"status": false,
