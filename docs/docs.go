@@ -30,16 +30,6 @@ const docTemplate = `{
                     "Admin"
                 ],
                 "summary": "Get all movies",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "default": "Bearer \u003cyour_token_here\u003e",
-                        "description": "Bearer token",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    }
-                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -75,7 +65,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Add Movies with all the relations (genres, cast, and schedules)",
+                "description": "Add Movies with all the relations (genres, cast, and schedules)\nSchedule Time ENUM [10:00,13:00,16:00,19:00,22:00]",
                 "consumes": [
                     "multipart/form-data"
                 ],
@@ -145,7 +135,8 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Schedules (JSON array: [{}])",
                         "name": "schedules",
-                        "in": "formData"
+                        "in": "formData",
+                        "required": true
                     },
                     {
                         "type": "file",
@@ -307,7 +298,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Update movie data by ID, allow uploading poster and backdrop",
+                "description": "Update movie data by ID, allow uploading poster and backdrop.",
                 "consumes": [
                     "multipart/form-data"
                 ],
@@ -503,6 +494,46 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/logout": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Invalidate the JWT token by adding it to Redis blacklist so it cannot be used again",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Logout user and invalidate JWT token",
+                "responses": {
+                    "200": {
+                        "description": "Logout successful",
+                        "schema": {
+                            "$ref": "#/definitions/models.SuccessResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Token is required or unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error during logout",
                         "schema": {
                             "$ref": "#/definitions/models.ErrorResponse"
                         }
@@ -1032,8 +1063,14 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Password",
-                        "name": "password",
+                        "description": "Old Password",
+                        "name": "old_password",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "New Password",
+                        "name": "new_password",
                         "in": "formData"
                     },
                     {
@@ -1156,12 +1193,9 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "cinemas_schedule_id",
-                "is_active",
-                "is_paid",
                 "payment_method_id",
                 "seats",
-                "total_prices",
-                "user_id"
+                "total_prices"
             ],
             "properties": {
                 "cinemas_schedule_id": {
@@ -1169,12 +1203,10 @@ const docTemplate = `{
                     "example": 1
                 },
                 "is_active": {
-                    "type": "boolean",
-                    "example": true
+                    "type": "boolean"
                 },
                 "is_paid": {
-                    "type": "boolean",
-                    "example": true
+                    "type": "boolean"
                 },
                 "payment_method_id": {
                     "type": "integer",
@@ -1189,10 +1221,6 @@ const docTemplate = `{
                 "total_prices": {
                     "type": "number",
                     "example": 120000
-                },
-                "user_id": {
-                    "type": "integer",
-                    "example": 1
                 }
             }
         },

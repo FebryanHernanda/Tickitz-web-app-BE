@@ -48,10 +48,8 @@ definitions:
         example: 1
         type: integer
       is_active:
-        example: true
         type: boolean
       is_paid:
-        example: true
         type: boolean
       payment_method_id:
         example: 2
@@ -63,17 +61,11 @@ definitions:
       total_prices:
         example: 120000
         type: number
-      user_id:
-        example: 1
-        type: integer
     required:
     - cinemas_schedule_id
-    - is_active
-    - is_paid
     - payment_method_id
     - seats
     - total_prices
-    - user_id
     type: object
   models.OrderSeatInput:
     properties:
@@ -115,13 +107,6 @@ paths:
   /admin/movies:
     get:
       description: Retrieve list of all movies (admin access required)
-      parameters:
-      - default: Bearer <your_token_here>
-        description: Bearer token
-        in: header
-        name: Authorization
-        required: true
-        type: string
       produces:
       - application/json
       responses:
@@ -150,7 +135,9 @@ paths:
     post:
       consumes:
       - multipart/form-data
-      description: Add Movies with all the relations (genres, cast, and schedules)
+      description: |-
+        Add Movies with all the relations (genres, cast, and schedules)
+        Schedule Time ENUM [10:00,13:00,16:00,19:00,22:00]
       parameters:
       - description: Movie Title
         in: formData
@@ -191,6 +178,7 @@ paths:
       - description: 'Schedules (JSON array: [{}])'
         in: formData
         name: schedules
+        required: true
         type: string
       - description: Poster file
         in: formData
@@ -299,7 +287,7 @@ paths:
     patch:
       consumes:
       - multipart/form-data
-      description: Update movie data by ID, allow uploading poster and backdrop
+      description: Update movie data by ID, allow uploading poster and backdrop.
       parameters:
       - description: Movie ID
         in: path
@@ -429,6 +417,32 @@ paths:
           schema:
             $ref: '#/definitions/models.ErrorResponse'
       summary: User login
+      tags:
+      - Authentication
+  /auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Invalidate the JWT token by adding it to Redis blacklist so it
+        cannot be used again
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Logout successful
+          schema:
+            $ref: '#/definitions/models.SuccessResponse'
+        "401":
+          description: Token is required or unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error during logout
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Logout user and invalidate JWT token
       tags:
       - Authentication
   /auth/register:
@@ -764,9 +778,13 @@ paths:
         in: formData
         name: email
         type: string
-      - description: Password
+      - description: Old Password
         in: formData
-        name: password
+        name: old_password
+        type: string
+      - description: New Password
+        in: formData
+        name: new_password
         type: string
       - description: First Name
         in: formData
