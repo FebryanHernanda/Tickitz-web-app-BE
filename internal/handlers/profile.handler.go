@@ -89,6 +89,7 @@ func (h *ProfileHandler) UpdateProfile(ctx *gin.Context) {
 		}
 
 		if bcrypt.CompareHashAndPassword([]byte(storedUser.Password), []byte(*update.User.OldPassword)) != nil {
+			log.Println("bcrypt error:", err)
 			ctx.JSON(http.StatusUnauthorized, gin.H{
 				"success": false,
 				"error":   "old password is incorrect",
@@ -109,15 +110,6 @@ func (h *ProfileHandler) UpdateProfile(ctx *gin.Context) {
 		update.User.NewPassword = &hashPassStr
 	}
 
-	if err := h.repo.UpdateProfile(ctx, userID, &update); err != nil {
-		log.Printf("%s", err)
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"status": false,
-			"error":  err.Error(),
-		})
-		return
-	}
-
 	// file upload
 	savePath, err := utils.UploadFile(ctx, "image", "public/profile", "profile")
 	if err != nil {
@@ -130,6 +122,22 @@ func (h *ProfileHandler) UpdateProfile(ctx *gin.Context) {
 
 	if savePath != "" {
 		update.Profile.ImagePath = &savePath
+	}
+
+	if err := h.repo.UpdateProfile(ctx, userID, &update); err != nil {
+		log.Printf("%s", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"status": false,
+			"error":  err.Error(),
+		})
+		return
+	}
+
+	redisKey := fmt.Sprintf("users:profile=%d", userID)
+	if h.rdb != nil {
+		if err := h.rdb.Del(ctx, redisKey).Err(); err != nil {
+			log.Println("Redis delete cache error:", err)
+		}
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
