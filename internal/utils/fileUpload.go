@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func UploadFile(ctx *gin.Context, formField, uploadPath, prefix string) (string, error) {
+func UploadFile(ctx *gin.Context, formField, uploadPath, prefix, folderPath string) (string, error) {
 	file, err := ctx.FormFile(formField)
 	if err != nil {
 		return "", nil
@@ -22,5 +22,5 @@ func UploadFile(ctx *gin.Context, formField, uploadPath, prefix string) (string,
 		return "", err
 	}
 
-	return "/uploads/" + filename, nil
+	return fmt.Sprintf("/%s/%s", folderPath, filename), nil
 }
