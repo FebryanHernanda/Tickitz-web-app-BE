@@ -13,4 +13,5 @@ type GetFilterSchedules struct {
 	LocationName *string    `form:"location_name"`
 	ScheduleDate *time.Time `form:"schedule_date"`
 	ScheduleTime *string    `form:"schedule_time"`
+	MovieName    *string    `form:"movie_name"`
 }
