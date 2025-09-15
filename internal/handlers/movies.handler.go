@@ -228,7 +228,7 @@ func (h *MoviesHandler) GetMoviesByFilter(ctx *gin.Context) {
 	}
 
 	if h.rdb != nil {
-		err := utils.SetCache(ctx, h.rdb, redisKey, movies, 10*time.Minute)
+		err := utils.SetCache(ctx, h.rdb, redisKey, movies, 2*time.Minute)
 		if err != nil {
 			log.Println("Redis set cache error:", err)
 		}
@@ -327,7 +327,7 @@ func (h *MoviesHandler) GetSchedulesMovies(ctx *gin.Context) {
 	}
 
 	if h.rdb != nil {
-		err := utils.SetCache(ctx, h.rdb, redisKey, schedules, 5*time.Minute)
+		err := utils.SetCache(ctx, h.rdb, redisKey, schedules, 1*time.Minute)
 		if err != nil {
 			log.Println("Redis set cache error:", err)
 		}
