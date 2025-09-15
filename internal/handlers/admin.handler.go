@@ -121,7 +121,7 @@ func (h *AdminHandler) AddMovies(ctx *gin.Context) {
 		})
 	}
 
-	posterPath, err := utils.UploadFile(ctx, "poster", "public/movies/posters", "poster")
+	posterPath, err := utils.UploadFile(ctx, "poster", "public/movies/posters", "poster", "movies")
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
@@ -132,7 +132,7 @@ func (h *AdminHandler) AddMovies(ctx *gin.Context) {
 		movie.PosterPath = posterPath
 	}
 
-	backdropPath, err := utils.UploadFile(ctx, "backdrop", "public/movies/backdrops", "backdrop")
+	backdropPath, err := utils.UploadFile(ctx, "backdrop", "public/movies/backdrops", "backdrop", "movies")
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
@@ -310,7 +310,7 @@ func (h *AdminHandler) UpdateMovies(ctx *gin.Context) {
 		return
 	}
 
-	posterPath, err := utils.UploadFile(ctx, "poster", "public/movies/posters", "poster")
+	posterPath, err := utils.UploadFile(ctx, "poster", "public/movies/posters", "poster", "movies")
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
@@ -321,7 +321,7 @@ func (h *AdminHandler) UpdateMovies(ctx *gin.Context) {
 		update.PosterPath = &posterPath
 	}
 
-	backdropPath, err := utils.UploadFile(ctx, "backdrop", "public/movies/backdrops", "backdrop")
+	backdropPath, err := utils.UploadFile(ctx, "backdrop", "public/movies/backdrops", "backdrop", "movies")
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
