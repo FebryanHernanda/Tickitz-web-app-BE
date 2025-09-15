@@ -104,7 +104,7 @@ func (h *AdminHandler) GetAllMovies(ctx *gin.Context) {
 // @Param        director_id   formData  int     false  "Director ID"
 // @Param        genres        formData  string   false  "Genres [IDs, comma separated]"
 // @Param        casts         formData  string   false  "Casts [IDs, comma separated]"
-// @Param        schedules     formData  string  false  "Schedules (JSON array: [{}])"
+// @Param        schedules     formData  string  true  "Schedules (JSON array: [{}])"
 // @Param        poster        formData  file    false  "Poster file"
 // @Param        backdrop      formData  file    false  "Backdrop file"
 // @Success      200           {object}  models.SuccessResponse
@@ -377,6 +377,13 @@ func (h *AdminHandler) UpdateMovies(ctx *gin.Context) {
 			"error":   err.Error(),
 		})
 		return
+	}
+
+	redisKey := "admin:all-movies"
+	if h.rdb != nil {
+		if err := h.rdb.Del(ctx, redisKey).Err(); err != nil {
+			log.Println("Redis delete cache error:", err)
+		}
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
