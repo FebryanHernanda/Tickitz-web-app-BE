@@ -73,7 +73,8 @@ func (r *CinemaRepository) GetScheduleFilter(ctx context.Context, locationFilter
 		c.name AS cinema_name,
 		l.name AS location_name,
 		s.date AS schedule_date,
-		s.time AS schedule_time
+		s.time AS schedule_time,
+		m.title AS movie_title
 	FROM
     	cinemas_schedules cs
 	JOIN
@@ -82,6 +83,8 @@ func (r *CinemaRepository) GetScheduleFilter(ctx context.Context, locationFilter
     	locations l ON cs.locations_id = l.id
 	JOIN
     	schedules s ON cs.schedules_id = s.id
+	JOIN 
+		movies m ON s.movie_id = m.id
 	WHERE
 		($1::text IS NULL OR l.name = $1::text)
 		AND ($2::date IS NULL OR s.date = $2::date)
@@ -107,6 +110,7 @@ func (r *CinemaRepository) GetScheduleFilter(ctx context.Context, locationFilter
 			&fs.LocationName,
 			&fs.ScheduleDate,
 			&fs.ScheduleTime,
+			&fs.MovieName,
 		)
 		if err != nil {
 			return nil, err
