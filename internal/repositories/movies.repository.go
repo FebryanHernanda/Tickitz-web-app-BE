@@ -31,7 +31,7 @@ func (mr *MoviesRepository) GetUpcomingMovies(ctx context.Context) ([]models.Mov
 		JOIN movies_genres mg ON m.id = mg.movie_id
 		JOIN genres g ON mg.genre_id = g.id
 	WHERE
-    	release_date > NOW()
+    	release_date > CURRENT_DATE
 	GROUP BY
     	m.id;
 	`
@@ -164,8 +164,8 @@ func (mr *MoviesRepository) GetDetailMovies(ctx context.Context, movieID int64) 
 		m.duration,
 		m.synopsis,
 		d.name AS director,
-		ARRAY_AGG (c.name) AS casts,
-		ARRAY_AGG (g.name) AS genres
+		ARRAY_AGG (DISTINCT c.name) AS casts,
+		ARRAY_AGG (DISTINCT g.name) AS genres
 	FROM
 		movies m
 		LEFT JOIN directors d ON m.director_id = d.id
