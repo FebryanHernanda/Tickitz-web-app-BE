@@ -54,6 +54,9 @@ func MainRouter(db *pgxpool.Pool, rdb *redis.Client) *gin.Engine {
 	AuthRouter(r, jwtManager, rdb, authHandler)
 	CinemaRouter(r, cinemaHandler)
 
+	// register file upload
+	r.Static("/public", "./public")
+
 	// Register Swagger
 	docs.SwaggerInfo.BasePath = "/"
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
