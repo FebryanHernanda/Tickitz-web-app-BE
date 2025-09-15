@@ -50,8 +50,8 @@ func (h *MoviesHandler) GetUpcomingMovies(ctx *gin.Context) {
 				"data":    cached,
 				"message": "data from cache",
 			})
+			return
 		}
-		return
 	}
 
 	movies, err := h.repo.GetUpcomingMovies(ctx)
@@ -266,24 +266,6 @@ func (h *MoviesHandler) GetDetailMovies(ctx *gin.Context) {
 		return
 	}
 
-	redisKey := fmt.Sprintf("movies-detail:%d", movieID)
-	var cached models.MovieDetails
-
-	if h.rdb != nil {
-		err := utils.GetCache(ctx, h.rdb, redisKey, &cached)
-		if err != nil {
-			log.Println("Redis error, back to DB : ", err)
-		}
-		if cached.ID != 0 {
-			ctx.JSON(http.StatusOK, gin.H{
-				"success": true,
-				"data":    cached,
-				"message": "data from cache",
-			})
-			return
-		}
-	}
-
 	movies, err := h.repo.GetDetailMovies(ctx, movieID)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{
@@ -293,16 +275,8 @@ func (h *MoviesHandler) GetDetailMovies(ctx *gin.Context) {
 		return
 	}
 
-	if h.rdb != nil {
-		err := utils.SetCache(ctx, h.rdb, redisKey, movies, 10*time.Minute)
-		if err != nil {
-			log.Println("Redis set cache error:", err)
-		}
-	}
-
 	ctx.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"message": "data from database",
 		"data":    movies,
 	})
 }
