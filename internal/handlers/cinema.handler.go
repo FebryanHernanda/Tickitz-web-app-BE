@@ -202,7 +202,7 @@ func (h *CinemaHandler) GetScheduleFilter(ctx *gin.Context) {
 
 	if len(schedule) == 0 {
 		if h.rdb != nil {
-			err := utils.SetCache(ctx, h.rdb, redisKey, []models.GetFilterSchedules{}, 5*time.Minute)
+			err := utils.SetCache(ctx, h.rdb, redisKey, []models.GetFilterSchedules{}, 1*time.Minute)
 			if err != nil {
 				log.Println("Redis set cache error:", err)
 			}
