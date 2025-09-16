@@ -95,6 +95,9 @@ func (h *OrdersHandler) CreateOrder(ctx *gin.Context) {
 		return
 	}
 
+	if err := utils.InvalidateCache(ctx, h.rdb, []string{"cinemas:", "users:"}); err != nil {
+		log.Println("Redis delete cache error:", err)
+	}
 	order.ID = orderID
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "Order created successfully",
