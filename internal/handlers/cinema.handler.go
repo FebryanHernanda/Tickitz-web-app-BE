@@ -65,7 +65,7 @@ func (h *CinemaHandler) GetAvailableSeats(ctx *gin.Context) {
 		return
 	}
 
-	redisKey := fmt.Sprintf("cinemas-available-seats:%d", cinemaSchedulesID)
+	redisKey := fmt.Sprintf("cinemas:available-seats:%d", cinemaSchedulesID)
 	var cached []models.CinemaSeat
 
 	if h.rdb != nil {
@@ -152,7 +152,7 @@ func (h *CinemaHandler) GetScheduleFilter(ctx *gin.Context) {
 		timeCache = "<empty>"
 	}
 
-	redisKey := fmt.Sprintf("cinema-schedule:loc=%s:date=%s:time=%s:page=%d", locationCache, dateCache, timeCache, page)
+	redisKey := fmt.Sprintf("cinemas:schedule:loc=%s:date=%s:time=%s:page=%d", locationCache, dateCache, timeCache, page)
 
 	var cached []models.GetFilterSchedules
 	if h.rdb != nil {
