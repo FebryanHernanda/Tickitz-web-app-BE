@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/FebryanHernanda/Tickitz-web-app-BE/internal/models"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -18,6 +19,11 @@ func NewUserRepository(db *pgxpool.Pool) *UserRepository {
 }
 
 func (r *UserRepository) RegisterUser(ctx context.Context, user *models.User) error {
+	dbTx, err := r.DB.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer dbTx.Rollback(ctx)
 
 	queryUser := `
 	INSERT INTO users (email, password, role,  virtual_account)
@@ -27,7 +33,7 @@ func (r *UserRepository) RegisterUser(ctx context.Context, user *models.User) er
 	values := []any{user.Email, user.Password, user.Role, user.VirtualAccount}
 
 	var userID int
-	err := r.DB.QueryRow(ctx, queryUser, values...).Scan(&userID)
+	err = dbTx.QueryRow(ctx, queryUser, values...).Scan(&userID)
 	if err != nil {
 		return err
 	}
@@ -36,9 +42,13 @@ func (r *UserRepository) RegisterUser(ctx context.Context, user *models.User) er
         INSERT INTO profiles (user_id, points, image_path)
         VALUES ($1, 0, 'public/profile/default.png')
 		`
-	_, err = r.DB.Exec(ctx, queryProfile, userID)
+	_, err = dbTx.Exec(ctx, queryProfile, userID)
 	if err != nil {
 		return err
+	}
+
+	if err := dbTx.Commit(ctx); err != nil {
+		return fmt.Errorf("commit db transaction failed : %w", err)
 	}
 
 	return nil
