@@ -58,3 +58,28 @@ func SetCache(ctx context.Context, rdb *redis.Client, key string, data interface
 
 	return nil
 }
+
+func InvalidateCache(ctx context.Context, rdb *redis.Client, prefixes []string) error {
+	if rdb == nil {
+		log.Println("Redis server unavailable")
+		return nil
+	}
+
+	for _, prefix := range prefixes {
+		iter := rdb.Scan(ctx, 0, prefix+"*", 0).Iterator()
+		for iter.Next(ctx) {
+			err := rdb.Del(ctx, iter.Val()).Err()
+			if err != nil {
+				log.Println("Redis delete error: ", err)
+				return err
+			}
+		}
+
+		if err := iter.Err(); err != nil {
+			log.Println("Redis scan error : ", err)
+			return err
+		}
+	}
+
+	return nil
+}
