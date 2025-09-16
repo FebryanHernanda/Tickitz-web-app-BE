@@ -36,7 +36,7 @@ func NewMoviesHandler(repo *repositories.MoviesRepository, rdb *redis.Client) *M
 // @Failure 500 {object} models.ErrorResponse
 // @Router /movies/upcoming [get]
 func (h *MoviesHandler) GetUpcomingMovies(ctx *gin.Context) {
-	redisKey := "movies-upcoming"
+	redisKey := "movies:upcoming"
 	var cached []models.Movie
 
 	if h.rdb != nil {
@@ -95,7 +95,7 @@ func (h *MoviesHandler) GetUpcomingMovies(ctx *gin.Context) {
 // @Failure 500 {object} models.ErrorResponse
 // @Router /movies/popular [get]
 func (h *MoviesHandler) GetPopularMovies(ctx *gin.Context) {
-	redisKey := "movies-popular"
+	redisKey := "movies:popular"
 	var cached []models.Movie
 
 	if h.rdb != nil {
@@ -182,7 +182,7 @@ func (h *MoviesHandler) GetMoviesByFilter(ctx *gin.Context) {
 		cacheGenre = "<empty>"
 	}
 
-	redisKey := fmt.Sprintf("movies-search:title=%s-genre=%s-page=%d", cacheSearch, cacheGenre, page)
+	redisKey := fmt.Sprintf("movies:search:title=%s-genre=%s-page=%d", cacheSearch, cacheGenre, page)
 	var cached []models.Movie
 
 	if h.rdb != nil {
@@ -291,7 +291,7 @@ func (h *MoviesHandler) GetDetailMovies(ctx *gin.Context) {
 // @Failure 500 {object} models.ErrorResponse
 // @Router /movies/schedules [get]
 func (h *MoviesHandler) GetSchedulesMovies(ctx *gin.Context) {
-	redisKey := "movies-schedules"
+	redisKey := "movies:schedules"
 	var cached []models.MovieSchedules
 
 	if h.rdb != nil {
