@@ -38,7 +38,7 @@ func NewAdminHandler(repo *repositories.AdminRepository, rdb *redis.Client) *Adm
 // @Failure      500  {object}  models.ErrorResponse
 // @Router       /admin/movies [get]
 func (h *AdminHandler) GetAllMovies(ctx *gin.Context) {
-	redisKey := "admin:all-movies"
+	redisKey := "movies:all-movies:"
 	var cached []models.AdminMovies
 
 	if h.rdb != nil {
@@ -208,7 +208,7 @@ func (h *AdminHandler) AddMovies(ctx *gin.Context) {
 // @Failure      500  {object}  models.ErrorResponse
 // @Router       /admin/movies/schedule [get]
 func (h *AdminHandler) GetMovieSchedule(ctx *gin.Context) {
-	redisKey := "admin:movies-schedule"
+	redisKey := "movies:movies-schedule"
 	var cached []models.GetSchedule
 
 	if h.rdb != nil {
@@ -379,11 +379,8 @@ func (h *AdminHandler) UpdateMovies(ctx *gin.Context) {
 		return
 	}
 
-	redisKey := "admin:all-movies"
-	if h.rdb != nil {
-		if err := h.rdb.Del(ctx, redisKey).Err(); err != nil {
-			log.Println("Redis delete cache error:", err)
-		}
+	if err := utils.InvalidateCache(ctx, h.rdb, []string{"movies:"}); err != nil {
+		log.Println("Redis delete cache error:", err)
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
@@ -443,6 +440,10 @@ func (h *AdminHandler) AddCinemaSchedule(ctx *gin.Context) {
 		return
 	}
 
+	if err := utils.InvalidateCache(ctx, h.rdb, []string{"cinemas:"}); err != nil {
+		log.Println("Redis delete cache error:", err)
+	}
+
 	ctx.JSON(http.StatusOK, gin.H{
 		"success":          true,
 		"message":          "success add cinemas schedule",
@@ -487,6 +488,10 @@ func (h *AdminHandler) DeleteMovies(ctx *gin.Context) {
 			"error":   err.Error(),
 		})
 		return
+	}
+
+	if err := utils.InvalidateCache(ctx, h.rdb, []string{"movies:"}); err != nil {
+		log.Println("Redis delete cache error:", err)
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
