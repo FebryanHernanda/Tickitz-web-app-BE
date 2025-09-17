@@ -26,7 +26,7 @@ func (r *UserRepository) RegisterUser(ctx context.Context, user *models.User) er
 	defer dbTx.Rollback(ctx)
 
 	queryUser := `
-	INSERT INTO users (email, password, role,  virtual_account)
+	INSERT INTO users (email, password, role, virtual_account)
     VALUES ($1, $2, $3, $4)
 	RETURNING id
 	`
