@@ -118,6 +118,7 @@ func (h *CinemaHandler) GetAvailableSeats(ctx *gin.Context) {
 // @Description  Retrieve cinema schedules filtered by location, date, and time with pagination
 // @Tags         Cinemas
 // @Produce      json
+// @Param 		 movieID path int true "Movie ID"
 // @Param        location  query  string  false  "Location Filter"
 // @Param        date      query  string  false  "Date Filter (YYYY-MM-DD)"
 // @Param        time      query  string  false  "Time Filter (HH:MM)"
@@ -125,8 +126,19 @@ func (h *CinemaHandler) GetAvailableSeats(ctx *gin.Context) {
 // @Failure      400  {object}  models.ErrorResponse
 // @Failure      404  {object}  models.ErrorResponse
 // @Failure      500  {object}  models.ErrorResponse
-// @Router       /cinemas [get]
+// @Router       /cinemas/{movieID} [get]
 func (h *CinemaHandler) GetScheduleFilter(ctx *gin.Context) {
+	movieIDStr := ctx.Param("movieID")
+	movieID, err := strconv.Atoi(movieIDStr)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Invalid movieID parameter",
+		})
+		return
+	}
+	log.Printf("movie id : %s", movieIDStr)
+
 	location := ctx.Query("location")
 	dateStr := ctx.Query("date")
 	timeStr := ctx.Query("time")
@@ -152,7 +164,7 @@ func (h *CinemaHandler) GetScheduleFilter(ctx *gin.Context) {
 		timeCache = "<empty>"
 	}
 
-	redisKey := fmt.Sprintf("cinemas:schedule:loc=%s:date=%s:time=%s:page=%d", locationCache, dateCache, timeCache, page)
+	redisKey := fmt.Sprintf("cinemas:schedule:movieid=%d:loc=%s:date=%s:time=%s:page=%d", movieID, locationCache, dateCache, timeCache, page)
 
 	var cached []models.GetFilterSchedules
 	if h.rdb != nil {
@@ -191,7 +203,7 @@ func (h *CinemaHandler) GetScheduleFilter(ctx *gin.Context) {
 		filter.ScheduleTime = &timeStr
 	}
 
-	schedule, err := h.repo.GetScheduleFilter(ctx, filter.LocationName, filter.ScheduleDate, filter.ScheduleTime, limit, offset)
+	schedule, err := h.repo.GetScheduleFilter(ctx, movieID, filter.LocationName, filter.ScheduleDate, filter.ScheduleTime, limit, offset)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
@@ -217,7 +229,7 @@ func (h *CinemaHandler) GetScheduleFilter(ctx *gin.Context) {
 	}
 
 	if h.rdb != nil {
-		err := utils.SetCache(ctx, h.rdb, redisKey, schedule, 5*time.Minute)
+		err := utils.SetCache(ctx, h.rdb, redisKey, schedule, 2*time.Minute)
 		if err != nil {
 			log.Println("Redis set cache error:", err)
 		}
