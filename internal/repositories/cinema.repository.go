@@ -67,7 +67,7 @@ func (r *CinemaRepository) GetAvailableSeats(ctx context.Context, cinemaSchedule
 	return seats, nil
 }
 
-func (r *CinemaRepository) GetScheduleFilter(ctx context.Context, locationFilter *string, dateFilter *time.Time, timeFilter *string, limit, offset int) ([]models.GetFilterSchedules, error) {
+func (r *CinemaRepository) GetScheduleFilter(ctx context.Context, movieID int, locationFilter *string, dateFilter *time.Time, timeFilter *string, limit, offset int) ([]models.GetFilterSchedules, error) {
 	query := `
 	SELECT
 		c.name AS cinema_name,
@@ -86,15 +86,16 @@ func (r *CinemaRepository) GetScheduleFilter(ctx context.Context, locationFilter
 	JOIN 
 		movies m ON s.movie_id = m.id
 	WHERE
-		($1::text IS NULL OR l.name = $1::text)
-		AND ($2::date IS NULL OR s.date = $2::date)
-		AND ($3::show_time IS NULL OR s.time = $3::show_time)
+		s.movie_id = $1
+		AND ($2::text IS NULL OR l.name = $2::text)
+		AND ($3::date IS NULL OR s.date = $3::date)
+		AND ($4::show_time IS NULL OR s.time = $4::show_time)
 	ORDER BY
     	s.time ASC
-	LIMIT $4 OFFSET $5
+	LIMIT $5 OFFSET $6
 `
 
-	values := []any{locationFilter, dateFilter, timeFilter, limit, offset}
+	values := []any{movieID, locationFilter, dateFilter, timeFilter, limit, offset}
 
 	rows, err := r.DB.Query(ctx, query, values...)
 	if err != nil {
