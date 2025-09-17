@@ -169,6 +169,7 @@ func (u *AuthHandler) Login(ctx *gin.Context) {
 		"success": true,
 		"message": "Login successful",
 		"token":   token,
+		"role":    dbUser.Role,
 	})
 
 }
