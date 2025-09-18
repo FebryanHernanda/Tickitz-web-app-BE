@@ -70,6 +70,7 @@ func (r *CinemaRepository) GetAvailableSeats(ctx context.Context, cinemaSchedule
 func (r *CinemaRepository) GetScheduleFilter(ctx context.Context, movieID int, locationFilter *string, dateFilter *time.Time, timeFilter *string, limit, offset int) ([]models.GetFilterSchedules, error) {
 	query := `
 	SELECT
+		cs.id AS cinema_schedule_id,
 		c.name AS cinema_name,
 		c.prices AS ticket_price,
 		l.name AS location_name,
@@ -108,6 +109,7 @@ func (r *CinemaRepository) GetScheduleFilter(ctx context.Context, movieID int, l
 	for rows.Next() {
 		var fs models.GetFilterSchedules
 		err := rows.Scan(
+			&fs.CinemaScheduleID,
 			&fs.CinemaName,
 			&fs.TicketPrice,
 			&fs.LocationName,
