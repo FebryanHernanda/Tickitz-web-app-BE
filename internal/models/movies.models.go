@@ -34,4 +34,5 @@ type MovieSchedules struct {
 	MovieTitle   string    `json:"movie_title"`
 	CinemaName   string    `json:"cinema_name"`
 	LocationName string    `json:"location_name"`
+	TicketPrices float64   `json:"ticket_price"`
 }
