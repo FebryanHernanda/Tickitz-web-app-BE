@@ -68,9 +68,9 @@ func (pr *ProfileRepository) UpdateProfile(ctx context.Context, userID int, upda
 		userArgs = append(userArgs, update.User.Email)
 		userPos++
 	}
-	if update.User.NewPassword != nil {
+	if update.User.Password != nil {
 		userSet = append(userSet, fmt.Sprintf("password = $%d", userPos))
-		userArgs = append(userArgs, update.User.NewPassword)
+		userArgs = append(userArgs, update.User.Password)
 		userPos++
 	}
 
