@@ -211,6 +211,7 @@ func (mr *MoviesRepository) GetSchedulesMovies(ctx context.Context) ([]models.Mo
             s.time,
             m.title,
             c.name,
+			c.prices AS ticket_price,
             l.name
         FROM schedules s
         JOIN movies m ON m.id = s.movie_id
@@ -235,6 +236,7 @@ func (mr *MoviesRepository) GetSchedulesMovies(ctx context.Context) ([]models.Mo
 			&sch.Time,
 			&sch.MovieTitle,
 			&sch.CinemaName,
+			&sch.TicketPrices,
 			&sch.LocationName,
 		)
 		if err != nil {
