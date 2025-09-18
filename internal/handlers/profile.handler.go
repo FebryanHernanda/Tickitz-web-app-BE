@@ -33,8 +33,6 @@ func NewProfileHandler(repo *repositories.ProfileRepository, rdb *redis.Client) 
 // @Accept       multipart/form-data
 // @Produce      json
 // @Param        email   formData  string  false  "Email"
-// @Param        old_password  formData  string  false  "Old Password"
-// @Param        new_password  formData  string  false  "New Password"
 // @Param        first_name   formData  string  false  "First Name"
 // @Param        last_name    formData  string  false  "Last Name"
 // @Param        phone_number formData  string  false  "Phone Number"
@@ -58,56 +56,7 @@ func (h *ProfileHandler) UpdateProfile(ctx *gin.Context) {
 			"success": false,
 			"error":   err.Error(),
 		})
-	}
-
-	if update.User.Email != nil {
-		if err := utils.IsValidEmail(*update.User.Email); err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"success": false,
-				"error":   err.Error(),
-			})
-			return
-		}
-	}
-
-	if update.User.NewPassword != nil {
-		if update.User.OldPassword == nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"success": false,
-				"error":   "old password is required",
-			})
-			return
-		}
-
-		storedUser, err := h.repo.GetProfile(ctx, userID)
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{
-				"success": false,
-				"error":   "failed to get user data",
-			})
-			return
-		}
-
-		if bcrypt.CompareHashAndPassword([]byte(storedUser.Password), []byte(*update.User.OldPassword)) != nil {
-			log.Println("bcrypt error:", err)
-			ctx.JSON(http.StatusUnauthorized, gin.H{
-				"success": false,
-				"error":   "old password is incorrect",
-			})
-			return
-		}
-
-		if err := utils.IsValidPassword(*update.User.NewPassword); err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"success": false,
-				"error":   err.Error(),
-			})
-			return
-		}
-
-		hashedPass, _ := bcrypt.GenerateFromPassword([]byte(*update.User.NewPassword), bcrypt.DefaultCost)
-		hashPassStr := string(hashedPass)
-		update.User.NewPassword = &hashPassStr
+		return
 	}
 
 	// file upload
@@ -140,6 +89,101 @@ func (h *ProfileHandler) UpdateProfile(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"status":  true,
 		"message": "Profile updated successfully",
+	})
+}
+
+// UpdatePassword godoc
+// @Summary      Update user password
+// @Description  Update user password
+// @Tags         Profile
+// @Accept       multipart/form-data
+// @Produce      json
+// @Param        old_password  formData  string  false  "Old Password"
+// @Param        new_password  formData  string  false  "New Password"
+// @Success      200 {object} models.SuccessResponse "Profile updated successfully"
+// @Failure      400 {object} models.ErrorResponse "Bad Request"
+// @Failure      401 {object} models.ErrorResponse "Unauthorized"
+// @Failure      500 {object} models.ErrorResponse "Internal Server Error"
+// @Security     BearerAuth
+// @Router       /profile/editpassword [patch]
+func (h *ProfileHandler) UpdatePassword(ctx *gin.Context) {
+	rawClaims, _ := ctx.Get("claims")
+	claims := rawClaims.(*utils.Claims)
+	userID := claims.UserID
+
+	var update models.UserUpdateRequest
+	if err := ctx.ShouldBind(&update); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	if update.User.Email != nil {
+		if err := utils.IsValidEmail(*update.User.Email); err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"success": false,
+				"error":   err.Error(),
+			})
+			return
+		}
+	}
+
+	if update.User.NewPassword != nil {
+		if update.User.OldPassword == nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"success": false,
+				"error":   "old password is required",
+			})
+			return
+		}
+
+		storedUser, err := h.repo.GetProfile(ctx, userID)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"error":   "failed to get user data",
+			})
+			return
+		}
+
+		if bcrypt.CompareHashAndPassword([]byte(storedUser.Password), []byte(*update.User.OldPassword)) != nil {
+			ctx.JSON(http.StatusUnauthorized, gin.H{
+				"success": false,
+				"error":   "old password is incorrect",
+			})
+			return
+		}
+
+		if err := utils.IsValidPassword(*update.User.NewPassword); err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"success": false,
+				"error":   err.Error(),
+			})
+			return
+		}
+
+		hashedPass, _ := bcrypt.GenerateFromPassword([]byte(*update.User.NewPassword), bcrypt.DefaultCost)
+		hashPassStr := string(hashedPass)
+
+		update.User.Password = &hashPassStr
+		update.User.NewPassword = nil
+		update.User.OldPassword = nil
+	}
+
+	if err := h.repo.UpdateProfile(ctx, userID, &update); err != nil {
+		log.Printf("%s", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"status": false,
+			"error":  err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"status":  true,
+		"message": "password updated successfully",
 	})
 }
 
