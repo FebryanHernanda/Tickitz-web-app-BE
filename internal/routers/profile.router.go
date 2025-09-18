@@ -15,4 +15,5 @@ func ProfileRouter(r *gin.Engine, profileHandler *handlers.ProfileHandler, jwtMa
 
 	profileRoutes.GET("", profileHandler.GetProfile)
 	profileRoutes.PATCH("/edit", profileHandler.UpdateProfile)
+	profileRoutes.PATCH("/editpassword", profileHandler.UpdatePassword)
 }
