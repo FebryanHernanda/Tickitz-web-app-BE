@@ -71,6 +71,7 @@ func (r *CinemaRepository) GetScheduleFilter(ctx context.Context, movieID int, l
 	query := `
 	SELECT
 		c.name AS cinema_name,
+		c.prices AS ticket_price,
 		l.name AS location_name,
 		s.date AS schedule_date,
 		s.time AS schedule_time,
@@ -108,6 +109,7 @@ func (r *CinemaRepository) GetScheduleFilter(ctx context.Context, movieID int, l
 		var fs models.GetFilterSchedules
 		err := rows.Scan(
 			&fs.CinemaName,
+			&fs.TicketPrice,
 			&fs.LocationName,
 			&fs.ScheduleDate,
 			&fs.ScheduleTime,
