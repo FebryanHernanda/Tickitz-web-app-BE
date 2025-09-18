@@ -169,7 +169,7 @@ func (h *MoviesHandler) GetMoviesByFilter(ctx *gin.Context) {
 		page = 1
 	}
 
-	limit := 10
+	limit := 12
 
 	offset := (page - 1) * limit
 
@@ -194,6 +194,8 @@ func (h *MoviesHandler) GetMoviesByFilter(ctx *gin.Context) {
 			ctx.JSON(http.StatusOK, gin.H{
 				"success": true,
 				"data":    cached,
+				"page":    page,
+				"limit":   limit,
 				"message": "data from cache",
 			})
 			return
