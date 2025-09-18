@@ -9,10 +9,11 @@ type CinemaSeat struct {
 }
 
 type GetFilterSchedules struct {
-	CinemaName   *string
-	TicketPrice  float64
-	LocationName *string    `form:"location_name"`
-	ScheduleDate *time.Time `form:"schedule_date"`
-	ScheduleTime *string    `form:"schedule_time"`
-	MovieName    *string    `form:"movie_name"`
+	CinemaScheduleID int
+	CinemaName       *string
+	TicketPrice      float64
+	LocationName     *string    `form:"location_name"`
+	ScheduleDate     *time.Time `form:"schedule_date"`
+	ScheduleTime     *string    `form:"schedule_time"`
+	MovieName        *string    `form:"movie_name"`
 }
