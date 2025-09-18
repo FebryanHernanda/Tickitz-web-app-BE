@@ -39,8 +39,8 @@ func (r *UserRepository) RegisterUser(ctx context.Context, user *models.User) er
 	}
 
 	queryProfile := `
-        INSERT INTO profiles (user_id, points, image_path)
-        VALUES ($1, 0, 'public/profile/default.png')
+        INSERT INTO profiles (user_id, points)
+        VALUES ($1, 0)
 		`
 	_, err = dbTx.Exec(ctx, queryProfile, userID)
 	if err != nil {
