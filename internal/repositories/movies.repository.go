@@ -122,7 +122,7 @@ func (mr *MoviesRepository) GetMoviesByFilter(ctx context.Context, search, genre
             ($1 = '' OR m.title ILIKE '%' || $1 || '%')
             AND ($2 = '' OR g.name ILIKE '%' || $2 || '%')
         GROUP BY m.id
-        ORDER BY m.release_date ASC
+        ORDER BY m.id ASC
         LIMIT $3 OFFSET $4;
     `
 	values := []any{search, genre, limit, offset}
