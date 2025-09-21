@@ -3,7 +3,7 @@ name: Build & Push Backend Docker Image
 on:
   push:
     branches:
-      - main
+      - main # backend jalan setiap ada push ke branch main
 
 jobs:
   build-and-push:
@@ -26,17 +26,8 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: .
-          file: Dockerfile.backend
+          context: ./backend
+          file: ./backend/Dockerfile.backend
           push: true
           tags: ghcr.io/febryanhernanda/tickitz-web-app-be:latest
           platforms: linux/amd64,linux/arm64
-          build-args: |
-            DBNAME=${{ secrets.DBNAME }}
-            DBUSER=${{ secrets.DBUSER }}
-            DBPASSWORD=${{ secrets.DBPASSWORD }}
-            DBHOST=${{ secrets.DBHOST }}
-            DBPORT=${{ secrets.DBPORT }}
-            JWTKEY=${{ secrets.JWTKEY }}
-            RDBHOST=${{ secrets.RDBHOST }}
-            RDBPORT=${{ secrets.RDBPORT }}
