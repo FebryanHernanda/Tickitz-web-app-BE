@@ -8,7 +8,7 @@ import (
 )
 
 func CORSmiddleware(ctx *gin.Context) {
-	whitelist := []string{"http://127.0.0.1:3000", "http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:5173"}
+	whitelist := []string{"http://127.0.0.1:3000", "http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:5173", "http://192.168.100.234:3000"}
 	// get Header origin
 	origin := ctx.GetHeader("Origin")
 	// check request same with origin or not
