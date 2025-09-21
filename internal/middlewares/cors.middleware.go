@@ -2,15 +2,13 @@ package middlewares
 
 import (
 	"net/http"
-	"os"
 	"slices"
 
 	"github.com/gin-gonic/gin"
 )
 
 func CORSmiddleware(ctx *gin.Context) {
-	whitelistEnv := os.Getenv("FRONTEND_URL")
-	whitelist := []string{whitelistEnv}
+	whitelist := []string{"http://127.0.0.1:3000", "http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:5173"}
 	// get Header origin
 	origin := ctx.GetHeader("Origin")
 	// check request same with origin or not
