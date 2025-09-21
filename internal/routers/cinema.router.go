@@ -10,4 +10,6 @@ func CinemaRouter(r *gin.Engine, cinemaHandler *handlers.CinemaHandler) {
 
 	cinemaRoutes.GET("/available-seats/:cinemas_schedule_id", cinemaHandler.GetAvailableSeats)
 	cinemaRoutes.GET("/:movieID", cinemaHandler.GetScheduleFilter)
+	cinemaRoutes.GET("/list", cinemaHandler.GetCinemaList)
+	cinemaRoutes.GET("/location", cinemaHandler.GetCinemaLocation)
 }
