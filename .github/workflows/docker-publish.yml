@@ -26,8 +26,8 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./backend
-          file: ./backend/Dockerfile.backend
+          context: .
+          file: Dockerfile.backend
           push: true
           tags: ghcr.io/febryanhernanda/tickitz-web-app-be:latest
           platforms: linux/amd64,linux/arm64
