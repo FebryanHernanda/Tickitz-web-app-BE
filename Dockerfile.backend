@@ -17,5 +17,7 @@ RUN apk update && apk upgrade
 
 COPY --from=build /app/backend-app .
 
+RUN mkdir -p /app/public/movies /app/public/profile
+
 EXPOSE 8080
 CMD ["./backend-app"]
