@@ -2,17 +2,12 @@
 FROM golang:1.25-alpine AS build
 WORKDIR /app
 
-# Patch Alpine packages
 RUN apk update && apk upgrade
 
-# Copy go.mod & go.sum
 COPY go.mod go.sum ./
 RUN go mod tidy
 
-# Copy all source code
 COPY . .
-
-# Build Go 
 RUN go build -o backend-app ./cmd
 
 # Stage 2: minimal runtime
@@ -20,25 +15,7 @@ FROM alpine:3.18
 WORKDIR /app
 RUN apk update && apk upgrade
 
-# Build args untuk env
-ARG DBNAME
-ARG DBUSER
-ARG DBPASSWORD
-ARG DBHOST
-ARG DBPORT
-ARG JWTKEY
-ARG RDBHOST
-ARG RDBPORT
-
-ENV DBNAME=$DBNAME \
-    DBUSER=$DBUSER \
-    DBPASSWORD=$DBPASSWORD \
-    DBHOST=$DBHOST \
-    DBPORT=$DBPORT \
-    JWTKEY=$JWTKEY \
-    RDBHOST=$RDBHOST \
-    RDBPORT=$RDBPORT
-
 COPY --from=build /app/backend-app .
+
 EXPOSE 8080
 CMD ["./backend-app"]
