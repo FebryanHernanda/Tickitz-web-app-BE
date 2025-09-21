@@ -17,3 +17,13 @@ type GetFilterSchedules struct {
 	ScheduleTime     *string    `form:"schedule_time"`
 	MovieName        *string    `form:"movie_name"`
 }
+
+type CinemaList struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+}
+
+type CinemaLocation struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+}
