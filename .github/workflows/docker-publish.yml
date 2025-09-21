@@ -3,7 +3,7 @@ name: Build & Push Backend Docker Image
 on:
   push:
     branches:
-      - main # backend jalan setiap ada push ke branch main
+      - main
 
 jobs:
   build-and-push:
