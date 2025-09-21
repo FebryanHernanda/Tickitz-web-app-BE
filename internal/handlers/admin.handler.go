@@ -87,6 +87,47 @@ func (h *AdminHandler) GetAllMovies(ctx *gin.Context) {
 	})
 }
 
+// GetMovieEditDetail godoc
+// @Summary      Get movie edit details
+// @Description  Retrieve detailed movie data for editing (admin access required)
+// @Tags         Admin
+// @Security     BearerAuth
+// @Produce      json
+// @Param        movieEditId   path      int  true  "Movie ID"
+// @Success      200  {object}  models.SuccessResponse{data=models.MovieEditDetail}
+// @Failure      400  {object}  models.ErrorResponse
+// @Failure      401  {object}  models.ErrorResponse
+// @Failure      404  {object}  models.ErrorResponse
+// @Failure      500  {object}  models.ErrorResponse
+// @Router       /admin/movies/{movieEditId}/edit-details [get]
+func (h *AdminHandler) GetMovieEditDetail(ctx *gin.Context) {
+	idStr := ctx.Param("movieEditId")
+
+	movieID, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Invalid movie ID",
+		})
+		return
+	}
+
+	movie, err := h.repo.GetMovieEditDetail(ctx, movieID)
+	if err != nil {
+		log.Printf("%s", err.Error())
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   "Failed to get movie details",
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    movie,
+	})
+}
+
 // AddMovie godoc
 // @Summary      Add New Movie
 // @Description  Add Movies with all the relations (genres, cast, and schedules)
@@ -119,9 +160,10 @@ func (h *AdminHandler) AddMovies(ctx *gin.Context) {
 			"success": false,
 			"error":   err.Error(),
 		})
+		return
 	}
 
-	posterPath, err := utils.UploadFile(ctx, "poster", "public/movies/posters", "poster", "movies")
+	posterPath, err := utils.UploadFile(ctx, "poster", "public/movies/posters", "poster", "posters")
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
@@ -132,7 +174,7 @@ func (h *AdminHandler) AddMovies(ctx *gin.Context) {
 		movie.PosterPath = posterPath
 	}
 
-	backdropPath, err := utils.UploadFile(ctx, "backdrop", "public/movies/backdrops", "backdrop", "movies")
+	backdropPath, err := utils.UploadFile(ctx, "backdrop", "public/movies/backdrops", "backdrop", "backdrops")
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
@@ -188,6 +230,10 @@ func (h *AdminHandler) AddMovies(ctx *gin.Context) {
 			"error":   err.Error(),
 		})
 		return
+	}
+
+	if err := utils.InvalidateCache(ctx, h.rdb, []string{"movies:"}); err != nil {
+		log.Println("Redis delete cache error:", err)
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
@@ -310,7 +356,7 @@ func (h *AdminHandler) UpdateMovies(ctx *gin.Context) {
 		return
 	}
 
-	posterPath, err := utils.UploadFile(ctx, "poster", "public/movies/posters", "poster", "movies")
+	posterPath, err := utils.UploadFile(ctx, "poster", "public/movies/posters", "poster", "posters")
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
@@ -321,7 +367,7 @@ func (h *AdminHandler) UpdateMovies(ctx *gin.Context) {
 		update.PosterPath = &posterPath
 	}
 
-	backdropPath, err := utils.UploadFile(ctx, "backdrop", "public/movies/backdrops", "backdrop", "movies")
+	backdropPath, err := utils.UploadFile(ctx, "backdrop", "public/movies/backdrops", "backdrop", "backdrops")
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
@@ -368,6 +414,19 @@ func (h *AdminHandler) UpdateMovies(ctx *gin.Context) {
 			return
 		}
 		update.Schedules = &schedules
+	}
+
+	cinemaSchedulesStr := ctx.PostForm("cinemas_schedules")
+	if cinemaSchedulesStr != "" {
+		var cinemaSchedules []models.CinemaScheduleLocation
+		if err := json.Unmarshal([]byte(cinemaSchedulesStr), &cinemaSchedules); err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"success": false,
+				"error":   "invalid cinemas_schedules format",
+			})
+			return
+		}
+		update.CinemaSchedules = &cinemaSchedules
 	}
 
 	if err := h.repo.UpdateMovies(ctx, MovieID, update); err != nil {
