@@ -3,7 +3,6 @@ package handlers
 import (
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/FebryanHernanda/Tickitz-web-app-BE/internal/models"
 	"github.com/FebryanHernanda/Tickitz-web-app-BE/internal/repositories"
@@ -123,23 +122,6 @@ func (h *OrdersHandler) GetOrdersHistory(ctx *gin.Context) {
 
 	userID := claims.UserID
 
-	redisKey := "users:order-history"
-	var cached []models.OrderHistory
-	if h.rdb != nil {
-		err := utils.GetCache(ctx, h.rdb, redisKey, &cached)
-		if err != nil {
-			log.Println("Redis error, back to DB : ", err)
-		}
-		if len(cached) > 0 {
-			ctx.JSON(http.StatusOK, gin.H{
-				"success": true,
-				"data":    cached,
-				"message": "data from cache",
-			})
-			return
-		}
-	}
-
 	orderHistory, err := h.repo.GetOrdersHistory(ctx, userID)
 	if err != nil {
 		log.Println("ERROR GET HISTORY:", err)
@@ -156,13 +138,6 @@ func (h *OrdersHandler) GetOrdersHistory(ctx *gin.Context) {
 			"error":   "Order history not found",
 		})
 		return
-	}
-
-	if h.rdb != nil {
-		err := utils.SetCache(ctx, h.rdb, redisKey, orderHistory, 10*time.Minute)
-		if err != nil {
-			log.Println("Redis set cache error:", err)
-		}
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
