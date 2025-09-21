@@ -85,6 +85,192 @@ func (h *MoviesHandler) GetUpcomingMovies(ctx *gin.Context) {
 	})
 }
 
+// GetGenresMovies godoc
+// @Summary Get genres movies
+// @Description Retrieve a list of genres movies
+// @Tags Movies
+// @Produce json
+// @Success 200 {object} models.SuccessResponse
+// @Failure 404 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /movies/genres [get]
+func (h *MoviesHandler) GetGenresMovies(ctx *gin.Context) {
+	redisKey := "movies:genres"
+	var cached []models.MoviesGenres
+
+	if h.rdb != nil {
+		// Check Cache
+		err := utils.GetCache(ctx, h.rdb, redisKey, &cached)
+		if err != nil {
+			log.Println("Redis error, back to DB : ", err)
+		}
+		if len(cached) > 0 {
+			ctx.JSON(http.StatusOK, gin.H{
+				"success": true,
+				"data":    cached,
+				"message": "data from cache",
+			})
+			return
+		}
+	}
+
+	// Cache Miss
+	genres, err := h.repo.GetGenreMovies(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   err.Error(),
+		})
+	}
+
+	if len(genres) == 0 {
+		ctx.JSON(http.StatusNotFound, gin.H{
+			"success": false,
+			"message": "No genres movies found",
+		})
+		return
+	}
+
+	if h.rdb != nil {
+		// set cache
+		err := utils.SetCache(ctx, h.rdb, redisKey, genres, 5*time.Minute)
+		if err != nil {
+			log.Println("Redis set cache error:", err)
+		}
+
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    genres,
+		"message": "data from database",
+	})
+}
+
+// GetCastsMovies godoc
+// @Summary Get casts movies
+// @Description Retrieve a list of casts movies
+// @Tags Movies
+// @Produce json
+// @Success 200 {object} models.SuccessResponse
+// @Failure 404 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /movies/casts [get]
+func (h *MoviesHandler) GetCastsMovies(ctx *gin.Context) {
+	redisKey := "movies:casts"
+	var cached []models.MoviesGenres
+
+	if h.rdb != nil {
+		// Check Cache
+		err := utils.GetCache(ctx, h.rdb, redisKey, &cached)
+		if err != nil {
+			log.Println("Redis error, back to DB : ", err)
+		}
+		if len(cached) > 0 {
+			ctx.JSON(http.StatusOK, gin.H{
+				"success": true,
+				"data":    cached,
+				"message": "data from cache",
+			})
+			return
+		}
+	}
+
+	// Cache Miss
+	casts, err := h.repo.GetCastsMovies(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   err.Error(),
+		})
+	}
+
+	if len(casts) == 0 {
+		ctx.JSON(http.StatusNotFound, gin.H{
+			"success": false,
+			"message": "No casts movies found",
+		})
+		return
+	}
+
+	if h.rdb != nil {
+		// set cache
+		err := utils.SetCache(ctx, h.rdb, redisKey, casts, 5*time.Minute)
+		if err != nil {
+			log.Println("Redis set cache error:", err)
+		}
+
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    casts,
+		"message": "data from database",
+	})
+}
+
+// GetDirectorsMovies godoc
+// @Summary Get casts movies
+// @Description Retrieve a list of directors movies
+// @Tags Movies
+// @Produce json
+// @Success 200 {object} models.SuccessResponse
+// @Failure 404 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /movies/directors [get]
+func (h *MoviesHandler) GetDirectorsMovies(ctx *gin.Context) {
+	redisKey := "movies:directors"
+	var cached []models.MoviesDirectors
+
+	if h.rdb != nil {
+		// Check Cache
+		err := utils.GetCache(ctx, h.rdb, redisKey, &cached)
+		if err != nil {
+			log.Println("Redis error, back to DB : ", err)
+		}
+		if len(cached) > 0 {
+			ctx.JSON(http.StatusOK, gin.H{
+				"success": true,
+				"data":    cached,
+				"message": "data from cache",
+			})
+			return
+		}
+	}
+
+	// Cache Miss
+	directors, err := h.repo.GetDirectorsMovies(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   err.Error(),
+		})
+	}
+
+	if len(directors) == 0 {
+		ctx.JSON(http.StatusNotFound, gin.H{
+			"success": false,
+			"message": "No directors movies found",
+		})
+		return
+	}
+
+	if h.rdb != nil {
+		// set cache
+		err := utils.SetCache(ctx, h.rdb, redisKey, directors, 5*time.Minute)
+		if err != nil {
+			log.Println("Redis set cache error:", err)
+		}
+
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    directors,
+		"message": "data from database",
+	})
+}
+
 // GetPopularMovies godoc
 // @Summary Get popular movies
 // @Description Retrieve a list of popular movies
