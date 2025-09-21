@@ -19,6 +19,54 @@ func NewCinemaRepository(db *pgxpool.Pool) *CinemaRepository {
 	}
 }
 
+func (mr *CinemaRepository) GetCinemaList(ctx context.Context) ([]models.CinemaList, error) {
+	query := `SELECT id,name FROM cinemas`
+
+	rows, err := mr.DB.Query(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var cinemas []models.CinemaList
+	for rows.Next() {
+		var mv models.CinemaList
+		err := rows.Scan(
+			&mv.ID,
+			&mv.Name,
+		)
+		if err != nil {
+			return nil, err
+		}
+		cinemas = append(cinemas, mv)
+	}
+	return cinemas, nil
+}
+
+func (mr *CinemaRepository) GetCinemaLocation(ctx context.Context) ([]models.CinemaLocation, error) {
+	query := `SELECT id,name FROM locations`
+
+	rows, err := mr.DB.Query(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var cinemasLocation []models.CinemaLocation
+	for rows.Next() {
+		var mv models.CinemaLocation
+		err := rows.Scan(
+			&mv.ID,
+			&mv.Name,
+		)
+		if err != nil {
+			return nil, err
+		}
+		cinemasLocation = append(cinemasLocation, mv)
+	}
+	return cinemasLocation, nil
+}
+
 func (r *CinemaRepository) IsCinemaScheduleExists(ctx context.Context, cinemaScheduleID int) (bool, error) {
 	var exist bool
 	query := `SELECT EXISTS(SELECT 1 FROM cinemas_schedules WHERE id = $1)`
