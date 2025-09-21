@@ -17,6 +17,77 @@ func NewMovieRepository(db *pgxpool.Pool) *MoviesRepository {
 	}
 }
 
+func (mr *MoviesRepository) GetGenreMovies(ctx context.Context) ([]models.MoviesGenres, error) {
+	query := `SELECT id,name FROM genres`
+
+	rows, err := mr.DB.Query(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var genres []models.MoviesGenres
+	for rows.Next() {
+		var mv models.MoviesGenres
+		err := rows.Scan(
+			&mv.ID,
+			&mv.Name,
+		)
+		if err != nil {
+			return nil, err
+		}
+		genres = append(genres, mv)
+	}
+	return genres, nil
+}
+
+func (mr *MoviesRepository) GetCastsMovies(ctx context.Context) ([]models.MoviesCast, error) {
+	query := `SELECT id,name FROM casts`
+
+	rows, err := mr.DB.Query(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var casts []models.MoviesCast
+	for rows.Next() {
+		var mv models.MoviesCast
+		err := rows.Scan(
+			&mv.ID,
+			&mv.Name,
+		)
+		if err != nil {
+			return nil, err
+		}
+		casts = append(casts, mv)
+	}
+	return casts, nil
+}
+func (mr *MoviesRepository) GetDirectorsMovies(ctx context.Context) ([]models.MoviesDirectors, error) {
+	query := `SELECT id,name FROM directors`
+
+	rows, err := mr.DB.Query(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var directors []models.MoviesDirectors
+	for rows.Next() {
+		var mv models.MoviesDirectors
+		err := rows.Scan(
+			&mv.ID,
+			&mv.Name,
+		)
+		if err != nil {
+			return nil, err
+		}
+		directors = append(directors, mv)
+	}
+	return directors, nil
+}
+
 func (mr *MoviesRepository) GetUpcomingMovies(ctx context.Context) ([]models.Movie, error) {
 	query := `
 	SELECT
