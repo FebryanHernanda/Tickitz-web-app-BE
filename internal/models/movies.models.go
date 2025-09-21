@@ -36,3 +36,17 @@ type MovieSchedules struct {
 	LocationName string    `json:"location_name"`
 	TicketPrices float64   `json:"ticket_price"`
 }
+
+type MoviesGenres struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+}
+
+type MoviesCast struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+}
+type MoviesDirectors struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+}
