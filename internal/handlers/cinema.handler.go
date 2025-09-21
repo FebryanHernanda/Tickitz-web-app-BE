@@ -26,6 +26,130 @@ func NewCinemaHandler(repo *repositories.CinemaRepository, rdb *redis.Client) *C
 	}
 }
 
+// GetCinemaList godoc
+// @Summary Get cinema list
+// @Description Retrieve a list of cinema
+// @Tags Cinemas
+// @Produce json
+// @Success 200 {object} models.SuccessResponse
+// @Failure 404 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /cinemas/list [get]
+func (h *CinemaHandler) GetCinemaList(ctx *gin.Context) {
+	redisKey := "cinemas:cinemas-list"
+	var cached []models.CinemaList
+
+	if h.rdb != nil {
+		// Check Cache
+		err := utils.GetCache(ctx, h.rdb, redisKey, &cached)
+		if err != nil {
+			log.Println("Redis error, back to DB : ", err)
+		}
+		if len(cached) > 0 {
+			ctx.JSON(http.StatusOK, gin.H{
+				"success": true,
+				"data":    cached,
+				"message": "data from cache",
+			})
+			return
+		}
+	}
+
+	// Cache Miss
+	cinemaList, err := h.repo.GetCinemaList(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   err.Error(),
+		})
+	}
+
+	if len(cinemaList) == 0 {
+		ctx.JSON(http.StatusNotFound, gin.H{
+			"success": false,
+			"message": "No cinemas found",
+		})
+		return
+	}
+
+	if h.rdb != nil {
+		// set cache
+		err := utils.SetCache(ctx, h.rdb, redisKey, cinemaList, 5*time.Minute)
+		if err != nil {
+			log.Println("Redis set cache error:", err)
+		}
+
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    cinemaList,
+		"message": "data from database",
+	})
+}
+
+// GetCinemaLocation godoc
+// @Summary Get Cinema Location
+// @Description Retrieve a list of location cinema
+// @Tags Cinemas
+// @Produce json
+// @Success 200 {object} models.SuccessResponse
+// @Failure 404 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /cinemas/location [get]
+func (h *CinemaHandler) GetCinemaLocation(ctx *gin.Context) {
+	redisKey := "cinemas:cinemas-location"
+	var cached []models.CinemaLocation
+
+	if h.rdb != nil {
+		// Check Cache
+		err := utils.GetCache(ctx, h.rdb, redisKey, &cached)
+		if err != nil {
+			log.Println("Redis error, back to DB : ", err)
+		}
+		if len(cached) > 0 {
+			ctx.JSON(http.StatusOK, gin.H{
+				"success": true,
+				"data":    cached,
+				"message": "data from cache",
+			})
+			return
+		}
+	}
+
+	// Cache Miss
+	cinemaLocation, err := h.repo.GetCinemaLocation(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   err.Error(),
+		})
+	}
+
+	if len(cinemaLocation) == 0 {
+		ctx.JSON(http.StatusNotFound, gin.H{
+			"success": false,
+			"message": "No cinemas location found",
+		})
+		return
+	}
+
+	if h.rdb != nil {
+		// set cache
+		err := utils.SetCache(ctx, h.rdb, redisKey, cinemaLocation, 5*time.Minute)
+		if err != nil {
+			log.Println("Redis set cache error:", err)
+		}
+
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    cinemaLocation,
+		"message": "data from database",
+	})
+}
+
 // GetAvailableSeats godoc
 // @Summary      Get available seats for a cinema schedule
 // @Description  Retrieve list of available seats by cinema schedule ID
