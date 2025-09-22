@@ -27,3 +27,8 @@ type CinemaLocation struct {
 	ID   int    `json:"id"`
 	Name string `json:"name"`
 }
+
+type GetFilterSchedulesCache struct {
+	Data       []GetFilterSchedules `json:"data"`
+	TotalCount int                  `json:"total_count"`
+}

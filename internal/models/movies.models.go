@@ -1,6 +1,8 @@
 package models
 
-import "time"
+import (
+	"time"
+)
 
 type Movie struct {
 	ID           int       `json:"id"`
@@ -49,4 +51,9 @@ type MoviesCast struct {
 type MoviesDirectors struct {
 	ID   int    `json:"id"`
 	Name string `json:"name"`
+}
+
+type MoviesCache struct {
+	Movies     []Movie `json:"movies"`
+	TotalCount int     `json:"total_count"`
 }

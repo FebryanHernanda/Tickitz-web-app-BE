@@ -21,6 +21,11 @@ type AdminMovies struct {
 	Genres       []string   `json:"genres"`
 }
 
+type AdminMoviesCache struct {
+	Movies     []AdminMovies `json:"movies"`
+	TotalCount int           `json:"total_count"`
+}
+
 type AddMovies struct {
 	ID           int        `json:"id,omitempty"`
 	Title        string     `form:"title" json:"title" example:"Negeri 5 Menara"`
