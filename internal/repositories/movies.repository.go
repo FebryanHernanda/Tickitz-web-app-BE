@@ -177,7 +177,22 @@ func (mr *MoviesRepository) GetPopularMovies(ctx context.Context) ([]models.Movi
 	return movies, nil
 }
 
-func (mr *MoviesRepository) GetMoviesByFilter(ctx context.Context, search, genre string, page, limit, offset int) ([]models.Movie, error) {
+func (mr *MoviesRepository) GetMoviesByFilter(ctx context.Context, search, genre string, page, limit, offset int) ([]models.Movie, int, error) {
+	var totalCount int
+	countQuery := `
+        SELECT COUNT(DISTINCT m.id)
+        FROM movies m
+        JOIN movies_genres mg ON m.id = mg.movie_id
+        JOIN genres g ON mg.genre_id = g.id
+        WHERE 
+            ($1 = '' OR m.title ILIKE '%' || $1 || '%')
+            AND ($2 = '' OR g.name ILIKE '%' || $2 || '%');
+    `
+	err := mr.DB.QueryRow(ctx, countQuery, search, genre).Scan(&totalCount)
+	if err != nil {
+		return nil, 0, err
+	}
+
 	query := `
         SELECT
             m.id,
@@ -200,7 +215,7 @@ func (mr *MoviesRepository) GetMoviesByFilter(ctx context.Context, search, genre
 
 	rows, err := mr.DB.Query(ctx, query, values...)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 
@@ -216,11 +231,11 @@ func (mr *MoviesRepository) GetMoviesByFilter(ctx context.Context, search, genre
 			&mv.Genres,
 		)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		movies = append(movies, mv)
 	}
-	return movies, nil
+	return movies, totalCount, nil
 }
 
 func (mr *MoviesRepository) GetDetailMovies(ctx context.Context, movieID int64) (*models.MovieDetails, error) {

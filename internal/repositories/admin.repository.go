@@ -48,7 +48,13 @@ func (r *AdminRepository) IsScheduleExists(ctx context.Context, scheduleID int) 
 	return exist, nil
 }
 
-func (r *AdminRepository) GetAllMovies(ctx context.Context) ([]models.AdminMovies, error) {
+func (r *AdminRepository) GetAllMovies(ctx context.Context, limit, offset int) ([]models.AdminMovies, int, error) {
+	var totalCount int
+	err := r.DB.QueryRow(ctx, "SELECT COUNT(*) FROM movies").Scan(&totalCount)
+	if err != nil {
+		return nil, 0, err
+	}
+
 	query := `
 	SELECT
 		m.id, 
@@ -69,13 +75,14 @@ func (r *AdminRepository) GetAllMovies(ctx context.Context) ([]models.AdminMovie
 	LEFT JOIN directors d ON m.director_id = d.id
 	LEFT JOIN movies_cast mc ON m.id = mc.movie_id
 	LEFT JOIN casts c ON mc.cast_id = c.id
-	GROUP BY m.id, d.id;
+	GROUP BY m.id, d.id
+	LIMIT $1 OFFSET $2;
 	`
 
 	var allMovies []models.AdminMovies
-	rows, err := r.DB.Query(ctx, query)
+	rows, err := r.DB.Query(ctx, query, limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 
@@ -97,13 +104,13 @@ func (r *AdminRepository) GetAllMovies(ctx context.Context) ([]models.AdminMovie
 			&am.Genres,
 		)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
 		allMovies = append(allMovies, am)
 	}
 
-	return allMovies, nil
+	return allMovies, totalCount, nil
 }
 
 func (r *AdminRepository) GetMovieEditDetail(ctx context.Context, movieID int64) (*models.MovieEditDetail, error) {

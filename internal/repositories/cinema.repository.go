@@ -115,7 +115,23 @@ func (r *CinemaRepository) GetAvailableSeats(ctx context.Context, cinemaSchedule
 	return seats, nil
 }
 
-func (r *CinemaRepository) GetScheduleFilter(ctx context.Context, movieID int, locationFilter *string, dateFilter *time.Time, timeFilter *string, limit, offset int) ([]models.GetFilterSchedules, error) {
+func (r *CinemaRepository) GetScheduleFilter(ctx context.Context, movieID int, locationFilter *string, dateFilter *time.Time, timeFilter *string, limit, offset int) ([]models.GetFilterSchedules, int, error) {
+	countQuery := `
+    SELECT COUNT(*)
+    FROM cinemas_schedules cs
+    JOIN locations l ON cs.locations_id = l.id
+    JOIN schedules s ON cs.schedules_id = s.id
+    WHERE s.movie_id = $1
+      AND ($2::text IS NULL OR l.name = $2::text)
+      AND ($3::date IS NULL OR s.date = $3::date)
+      AND ($4::show_time IS NULL OR s.time = $4::show_time)
+    `
+	var totalCount int
+	err := r.DB.QueryRow(ctx, countQuery, movieID, locationFilter, dateFilter, timeFilter).Scan(&totalCount)
+	if err != nil {
+		return nil, 0, err
+	}
+
 	query := `
 	SELECT
 		cs.id AS cinema_schedule_id,
@@ -149,7 +165,7 @@ func (r *CinemaRepository) GetScheduleFilter(ctx context.Context, movieID int, l
 
 	rows, err := r.DB.Query(ctx, query, values...)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 
@@ -166,10 +182,10 @@ func (r *CinemaRepository) GetScheduleFilter(ctx context.Context, movieID int, l
 			&fs.MovieName,
 		)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		filterSchedule = append(filterSchedule, fs)
 	}
 
-	return filterSchedule, nil
+	return filterSchedule, totalCount, nil
 }
