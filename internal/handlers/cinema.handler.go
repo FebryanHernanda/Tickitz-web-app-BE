@@ -290,17 +290,22 @@ func (h *CinemaHandler) GetScheduleFilter(ctx *gin.Context) {
 
 	redisKey := fmt.Sprintf("cinemas:schedule:movieid=%d:loc=%s:date=%s:time=%s:page=%d", movieID, locationCache, dateCache, timeCache, page)
 
-	var cached []models.GetFilterSchedules
+	var cached models.GetFilterSchedulesCache
 	if h.rdb != nil {
 		err := utils.GetCache(ctx, h.rdb, redisKey, &cached)
 		if err != nil {
 			log.Println("Redis error, back to DB : ", err)
 		}
-		if len(cached) > 0 {
+		if len(cached.Data) > 0 {
 			ctx.JSON(http.StatusOK, gin.H{
-				"success": true,
-				"data":    cached,
-				"message": "data from cache",
+				"success":     true,
+				"message":     "data from cache",
+				"page":        page,
+				"limit":       limit,
+				"count":       len(cached.Data),
+				"total":       cached.TotalCount,
+				"total_pages": (cached.TotalCount + limit - 1) / limit,
+				"data":        cached.Data,
 			})
 			return
 		}
@@ -327,7 +332,7 @@ func (h *CinemaHandler) GetScheduleFilter(ctx *gin.Context) {
 		filter.ScheduleTime = &timeStr
 	}
 
-	schedule, err := h.repo.GetScheduleFilter(ctx, movieID, filter.LocationName, filter.ScheduleDate, filter.ScheduleTime, limit, offset)
+	schedule, totalCount, err := h.repo.GetScheduleFilter(ctx, movieID, filter.LocationName, filter.ScheduleDate, filter.ScheduleTime, limit, offset)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
@@ -338,32 +343,45 @@ func (h *CinemaHandler) GetScheduleFilter(ctx *gin.Context) {
 
 	if len(schedule) == 0 {
 		if h.rdb != nil {
-			err := utils.SetCache(ctx, h.rdb, redisKey, []models.GetFilterSchedules{}, 1*time.Minute)
+			err := utils.SetCache(ctx, h.rdb, redisKey, models.GetFilterSchedulesCache{
+				Data:       schedule,
+				TotalCount: totalCount,
+			}, 1*time.Minute)
 			if err != nil {
 				log.Println("Redis set cache error:", err)
 			}
 		}
+
 		ctx.JSON(http.StatusNotFound, gin.H{
-			"success": false,
-			"message": "No schedules found",
-			"page":    page,
-			"limit":   limit,
+			"success":     false,
+			"data":        []models.GetFilterSchedules{},
+			"message":     "No schedules found",
+			"page":        page,
+			"limit":       limit,
+			"total":       0,
+			"total_pages": 0,
 		})
 		return
 	}
 
 	if h.rdb != nil {
-		err := utils.SetCache(ctx, h.rdb, redisKey, schedule, 2*time.Minute)
+		err := utils.SetCache(ctx, h.rdb, redisKey, models.GetFilterSchedulesCache{
+			Data:       schedule,
+			TotalCount: totalCount,
+		}, 2*time.Minute)
 		if err != nil {
 			log.Println("Redis set cache error:", err)
 		}
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": "data from database",
-		"data":    schedule,
-		"page":    page,
-		"limit":   limit,
+		"success":     true,
+		"message":     "data from database",
+		"page":        page,
+		"limit":       limit,
+		"count":       len(schedule),
+		"total":       totalCount,
+		"total_pages": (totalCount + limit - 1) / limit,
+		"data":        schedule,
 	})
 }

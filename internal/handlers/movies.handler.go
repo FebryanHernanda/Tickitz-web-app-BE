@@ -369,26 +369,29 @@ func (h *MoviesHandler) GetMoviesByFilter(ctx *gin.Context) {
 	}
 
 	redisKey := fmt.Sprintf("movies:search:title=%s-genre=%s-page=%d", cacheSearch, cacheGenre, page)
-	var cached []models.Movie
+	var cached models.MoviesCache
 
 	if h.rdb != nil {
 		err := utils.GetCache(ctx, h.rdb, redisKey, &cached)
 		if err != nil {
 			log.Println("Redis error, back to DB : ", err)
 		}
-		if len(cached) > 0 {
+		if len(cached.Movies) > 0 {
 			ctx.JSON(http.StatusOK, gin.H{
-				"success": true,
-				"data":    cached,
-				"page":    page,
-				"limit":   limit,
-				"message": "data from cache",
+				"success":     true,
+				"message":     "data from cache",
+				"page":        page,
+				"limit":       limit,
+				"count":       len(cached.Movies),
+				"total":       cached.TotalCount,
+				"total_pages": (cached.TotalCount + limit - 1) / limit,
+				"data":        cached.Movies,
 			})
 			return
 		}
 	}
 
-	movies, err := h.repo.GetMoviesByFilter(ctx, search, genre, page, limit, offset)
+	movies, totalCount, err := h.repo.GetMoviesByFilter(ctx, search, genre, page, limit, offset)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
@@ -399,36 +402,44 @@ func (h *MoviesHandler) GetMoviesByFilter(ctx *gin.Context) {
 
 	if len(movies) == 0 {
 		if h.rdb != nil {
-			err := utils.SetCache(ctx, h.rdb, redisKey, []models.Movie{}, 10*time.Minute)
+			err := utils.SetCache(ctx, h.rdb, redisKey, models.MoviesCache{Movies: []models.Movie{},
+				TotalCount: 0,
+			}, 10*time.Minute)
 			if err != nil {
 				log.Println("Redis set cache error:", err)
 			}
 		}
 
 		ctx.JSON(http.StatusNotFound, gin.H{
-			"success": false,
-			"data":    []models.Movie{},
-			"message": "No movies found",
-			"page":    page,
-			"limit":   limit,
+			"success":     false,
+			"data":        []models.Movie{},
+			"message":     "No movies found",
+			"page":        page,
+			"limit":       limit,
+			"total":       0,
+			"total_pages": 0,
 		})
 		return
 	}
 
 	if h.rdb != nil {
-		err := utils.SetCache(ctx, h.rdb, redisKey, movies, 2*time.Minute)
+		err := utils.SetCache(ctx, h.rdb, redisKey, models.MoviesCache{Movies: movies,
+			TotalCount: totalCount,
+		}, 2*time.Minute)
 		if err != nil {
 			log.Println("Redis set cache error:", err)
 		}
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": "data from database",
-		"page":    page,
-		"limit":   limit,
-		"count":   len(movies),
-		"data":    movies,
+		"success":     true,
+		"message":     "data from database",
+		"page":        page,
+		"limit":       limit,
+		"count":       len(movies),
+		"total":       totalCount,
+		"total_pages": (totalCount + limit - 1) / limit,
+		"data":        movies,
 	})
 }
 

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -38,25 +39,38 @@ func NewAdminHandler(repo *repositories.AdminRepository, rdb *redis.Client) *Adm
 // @Failure      500  {object}  models.ErrorResponse
 // @Router       /admin/movies [get]
 func (h *AdminHandler) GetAllMovies(ctx *gin.Context) {
-	redisKey := "movies:all-movies:"
-	var cached []models.AdminMovies
+	// Ambil page dari query params
+	page, err := strconv.Atoi(ctx.Query("page"))
+	if err != nil || page < 1 {
+		page = 1
+	}
+	limit := 5
+	offset := (page - 1) * limit
+
+	redisKey := fmt.Sprintf("movies:all-movies:page=%d", page)
+	var cached models.AdminMoviesCache
 
 	if h.rdb != nil {
 		err := utils.GetCache(ctx, h.rdb, redisKey, &cached)
 		if err != nil {
 			log.Println("Redis error, back to DB : ", err)
 		}
-		if len(cached) > 0 {
+		if len(cached.Movies) > 0 {
 			ctx.JSON(http.StatusOK, gin.H{
-				"success": true,
-				"data":    cached,
-				"message": "data from cache",
+				"success":     true,
+				"message":     "data from cache",
+				"page":        page,
+				"limit":       limit,
+				"count":       len(cached.Movies),
+				"total":       cached.TotalCount,
+				"total_pages": (cached.TotalCount + limit - 1) / limit,
+				"data":        cached.Movies,
 			})
 			return
 		}
 	}
 
-	allMovies, err := h.repo.GetAllMovies(ctx)
+	allMovies, totalCount, err := h.repo.GetAllMovies(ctx, limit, offset)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
@@ -74,16 +88,24 @@ func (h *AdminHandler) GetAllMovies(ctx *gin.Context) {
 	}
 
 	if h.rdb != nil {
-		err := utils.SetCache(ctx, h.rdb, redisKey, allMovies, 10*time.Minute)
+		err := utils.SetCache(ctx, h.rdb, redisKey, models.AdminMoviesCache{
+			Movies:     allMovies,
+			TotalCount: totalCount,
+		}, 10*time.Minute)
 		if err != nil {
 			log.Println("Redis set cache error:", err)
 		}
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": "data from database",
-		"data":    allMovies,
+		"success":     true,
+		"message":     "data from database",
+		"page":        page,
+		"limit":       limit,
+		"count":       len(allMovies),
+		"total":       totalCount,
+		"total_pages": (totalCount + limit - 1) / limit,
+		"data":        allMovies,
 	})
 }
 
