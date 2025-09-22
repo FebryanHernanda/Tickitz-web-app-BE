@@ -31,7 +31,7 @@ func (j *JWTManager) GenerateToken(user *models.User) (string, error) {
 		Email:  user.Email,
 		Role:   user.Role,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(30 * time.Minute)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(60 * time.Minute)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			Issuer:    "tickitz",
 		},
