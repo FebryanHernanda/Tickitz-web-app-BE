@@ -1,5 +1,6 @@
 include ./.env
 MIGRATIONPATH=db/migrations
+SEEDPATH=db/seeds
 DBURL=postgres://$(DBUSER):$(DBPASSWORD)@$(DBHOST):$(DBPORT)/$(DBNAME)?sslmode=disable
 
 migrate-create:
