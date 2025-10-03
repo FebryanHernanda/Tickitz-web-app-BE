@@ -379,10 +379,24 @@ func (r *AdminRepository) UpdateMovies(ctx context.Context, id int, update model
 		}
 	}
 
-	// insert/update schedules
+	// Delete old cinemas_schedule base on the movie id
+	if update.CinemaSchedules != nil {
+		_, err := dbTx.Exec(ctx, `
+            DELETE FROM cinemas_schedules 
+            WHERE schedules_id IN (
+                SELECT id FROM schedules WHERE movie_id = $1
+            )
+        `, id)
+		if err != nil {
+			return err
+		}
+	}
+
+	// update schedules
 	scheduleIDMap := map[string]int{}
 	keepKeys := map[string]struct{}{}
 
+	// check schedule with the keys
 	if update.Schedules != nil {
 		for _, s := range *update.Schedules {
 			key := s.Date + "|" + s.Time
@@ -411,7 +425,7 @@ func (r *AdminRepository) UpdateMovies(ctx context.Context, id int, update model
 		}
 	}
 
-	// remove schedules base on payload data
+	// get old schedule
 	rows, err := dbTx.Query(ctx, "SELECT id, date::text, time::text FROM schedules WHERE movie_id=$1", id)
 	if err != nil {
 		return err
@@ -429,12 +443,10 @@ func (r *AdminRepository) UpdateMovies(ctx context.Context, id int, update model
 	}
 	rows.Close()
 
+	// delete old schedule when not used
 	for _, s := range dbSchedules {
 		key := s.Date + "|" + s.Time
 		if _, ok := keepKeys[key]; !ok {
-			if _, err := dbTx.Exec(ctx, "DELETE FROM cinemas_schedules WHERE schedules_id=$1", s.ID); err != nil {
-				return err
-			}
 			if _, err := dbTx.Exec(ctx, "DELETE FROM schedules WHERE id=$1", s.ID); err != nil {
 				return err
 			}
@@ -457,18 +469,21 @@ func (r *AdminRepository) UpdateMovies(ctx context.Context, id int, update model
 
 			_, err := dbTx.Exec(ctx,
 				`INSERT INTO cinemas_schedules (cinemas_id, schedules_id, locations_id)
-                 VALUES ($1, $2, $3)
-                 ON CONFLICT DO NOTHING`,
+                 VALUES ($1, $2, $3)`,
 				cs.CinemaID, scheduleID, cs.LocationID,
 			)
 			if err != nil {
 				return err
 			}
-			log.Printf("[DEBUG] Cinema schedule inserted: %+v with scheduleID=%d\n", cs, scheduleID)
 		}
 	}
 
-	return dbTx.Commit(ctx)
+	err = dbTx.Commit(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (r *AdminRepository) GetMovieSchedule(ctx context.Context) ([]models.GetSchedule, error) {
