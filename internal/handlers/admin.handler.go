@@ -521,7 +521,7 @@ func (h *AdminHandler) AddCinemaSchedule(ctx *gin.Context) {
 		return
 	}
 
-	if err := utils.InvalidateCache(ctx, h.rdb, []string{"cinemas:"}); err != nil {
+	if err := utils.InvalidateCache(ctx, h.rdb, []string{"cinemas:", "movies"}); err != nil {
 		log.Println("Redis delete cache error:", err)
 	}
 
