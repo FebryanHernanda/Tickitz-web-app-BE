@@ -11,5 +11,11 @@ migrate-up:
 migrate-down:
 	migrate -database $(DBURL) -path $(MIGRATIONPATH) down
 
-print-db-url:
-	echo $(DBURL)
+migrate-seed:
+	psql $(DBURL) -f $(SEEDPATH)/$(NAME).sql
+
+migrate-status:
+	migrate -database $(DBURL) -path $(MIGRATIONPATH) version
+
+migrate-force:
+	migrate -database $(DBURL) -path $(MIGRATIONPATH) force $(v)
