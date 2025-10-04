@@ -1,4 +1,4 @@
-# backend-tickitz
+# Tickitz Backend
 
 ![badge golang](https://img.shields.io/badge/Go-00ADD8?style=for-the-badge&logo=go&logoColor=white)
 ![badge postgresql](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)
@@ -63,7 +63,6 @@ go mod tidy
 5. Run DB migrations
 
 ```sh
-# Example DATABASE_URL: postgres://user:pass@localhost:5432/tickitz?sslmode=disable
 make migrate-up
 ```
 
@@ -102,22 +101,22 @@ http://localhost:8080/swagger/index.html
 | Method | Endpoint             | Query / Body                               | Description                      |
 | ------ | -------------------- | ------------------------------------------ | -------------------------------- |
 | GET    | /movies              | page:int, search:string, genres:[]string   | List movies with filters         |
-| GET    | /movies/popular      | page:int                                   | Popular movies                   |
-| GET    | /movies/upcoming     | page:int                                   | Upcoming movies                  |
+| GET    | /movies/popular      |                                            | Popular movies                   |
+| GET    | /movies/upcoming     |                                            | Upcoming movies                  |
 | GET    | /movies/genres       |                                            | List available genres            |
 | GET    | /movies/casts        |                                            | List casts                       |
 | GET    | /movies/directors    |                                            | List directors                   |
 | GET    | /movies/{id}/details | path: id:int                               | Movie details by ID              |
-| GET    | /movies/schedules    | movie_id:int, location:string, date:string | Aggregated schedules for a movie |
+| GET    | /movies/schedules    |                                            | Aggregated schedules for a movie |
 
 ### Cinemas
 
 | Method | Endpoint                                      | Query / Body                 | Description                    |
 | ------ | --------------------------------------------- | ---------------------------- | ------------------------------ |
 | GET    | /cinemas/list                                 |                              | List cinemas                   |
-| GET    | /cinemas/location                             | city:string                  | Cinemas by location            |
+| GET    | /cinemas/location                             |                              | Cinemas by location            |
 | GET    | /cinemas/{movieId}                            | path: movieId:int            | Cinemas showing specific movie |
-| GET    | /cinemas/available-seats/{cinema_schedule_id} | path: cinema_schedule_id:int | Available seats for a schedule |
+| GET    | /cinemas/available-seats/{cinema_schedule_id} |                              | Available seats for a schedule |
 
 ### Orders
 
@@ -131,7 +130,7 @@ http://localhost:8080/swagger/index.html
 | Method | Endpoint              | Headers / Body                                              | Description      |
 | ------ | --------------------- | ----------------------------------------------------------- | ---------------- |
 | GET    | /profile              | Authorization: Bearer <token>                               | Get user profile |
-| PATCH  | /profile/edit         | Authorization: Bearer <token>, first_name, last_name, phone | Update profile   |
+| PATCH  | /profile/edit         | Authorization: Bearer <token>, first_name, last_name, phone, etc | Update profile   |
 | PATCH  | /profile/editpassword | Authorization: Bearer <token>, password                     | Change password  |
 
 ### Admin
@@ -141,7 +140,7 @@ http://localhost:8080/swagger/index.html
 | GET    | /admin/movies                        | Authorization: Bearer <admin_token>, page:int                                                                           | Admin movie list            |
 | POST   | /admin/movies/add                    | Authorization: Bearer <admin_token>, title, poster_path, backdrop_path, overview, duration, casts[], director, genres[] | Create movie                |
 | PATCH  | /admin/movies/edit/{id}              | Authorization: Bearer <admin_token>, path: id:int, fields to update                                                     | Update a movie              |
-| DELETE | /admin/movies/delete/{id}            | Authorization: Bearer <admin_token>, path: id:int                                                                       | Soft delete movie           |
+| DELETE | /admin/movies/delete/{id}            | Authorization: Bearer <admin_token>, path: id:int                                                                       | Hard delete movie           |
 | POST   | /admin/movies/cinemaschedule/add     | Authorization: Bearer <admin_token>, movie_id, cinema_id, room, date, time, price                                       | Add cinema schedule         |
 | GET    | /admin/movies/schedule               | Authorization: Bearer <admin_token>, movie_id:int                                                                       | List schedules (admin view) |
 | GET    | /admin/movies/{movieId}/edit-details | Authorization: Bearer <admin_token>, path: movieId:int                                                                  | Get editable movie details  |
