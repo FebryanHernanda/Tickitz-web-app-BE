@@ -1,0 +1,43 @@
+services:
+  frontend:
+    image: ghcr.io/febryanhernanda/tickitz-web-app-react:latest
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+  backend:
+    image: ghcr.io/febryanhernanda/tickitz-web-app-be:latest
+    container_name: backend
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    volumes:
+      - ./public:/app/public
+    depends_on:
+      - db
+      - redis
+
+  db:
+    image: postgres:17-alpine3.21
+    env_file:
+      - .env
+    volumes:
+      - pg:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:8.2-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+
+volumes:
+  pg:
+    external: true
+  redis-data:
+    external: true
